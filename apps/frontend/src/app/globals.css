@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 255 255 255; /* white */
+  --foreground: 23 23 23; /* neutral-900 */
+  --muted: 243 244 246; /* gray-100 */
+  --muted-foreground: 107 114 128; /* gray-500 */
+  --border: 229 231 235; /* gray-200 */
+  --primary: 59 130 246; /* blue-500 */
+  --primary-foreground: 255 255 255; /* white */
+}
+
+.dark {
+  --background: 10 10 10; /* almost black */
+  --foreground: 237 237 237; /* neutral-200 */
+  --muted: 23 23 23; /* neutral-900 */
+  --muted-foreground: 163 163 163; /* neutral-400 */
+  --border: 38 38 38; /* neutral-800 */
+  --primary: 56 189 248; /* sky-400 */
+  --primary-foreground: 0 0 0; /* black */
+}
+
+body {
+  background-color: rgb(var(--background));
+  color: rgb(var(--foreground));
+}
+
+/* Design tokens mapped to Tailwind utility aliases */
+@layer base {
+  :root {
+    --radius: 0.75rem;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    color-scheme: light dark;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { animation-delay: -1ms !important; animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 0s !important; scroll-behavior: auto !important; }
+  }
+
+  body {
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background: rgba(59,130,246,0.25);
+  }
+
+  :focus-visible {
+    outline: 2px solid rgb(var(--primary));
+    outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  .bg-background { background-color: rgb(var(--background)); }
+  .text-foreground { color: rgb(var(--foreground)); }
+  .bg-muted { background-color: rgb(var(--muted)); }
+  .text-muted-foreground { color: rgb(var(--muted-foreground)); }
+  .border-border { border-color: rgb(var(--border)); }
+  .bg-primary { background-color: rgb(var(--primary)); }
+  .text-primary { color: rgb(var(--primary)); }
+  .text-primary-foreground { color: rgb(var(--primary-foreground)); }
+}
