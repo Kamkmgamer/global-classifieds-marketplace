@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+apps/frontend/node_modules_stale/
+
+# Next.js
+.next/
+apps/frontend/.next/
+out/
+.vercel/
+
+# Builds
+build/
+dist/
+coverage/
+.turbo/
+
+# Logs and caches
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.eslintcache
+
+# OS/Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
