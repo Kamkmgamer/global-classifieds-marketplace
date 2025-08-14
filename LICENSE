@@ -1,0 +1,38 @@
+Custom Revenue-Share License
+Copyright (c) 2025 khalil abd almageed khalil mohammed
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the “Software”), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, subject to the following conditions:
+
+1. If the Software is used in a product or service with more than 500,000
+   monthly active users, the licensee must pay the Licensor a revenue share
+   starting at 1% of the gross revenue derived from the Software or its
+   related services, payable quarterly.
+
+2. Each time the number of monthly active users doubles beyond 500,000, the
+   revenue share rate shall be reduced to two-thirds (⅔) of the previous rate.
+   For example:
+      • ≥ 500,000 users: 1%
+      • ≥ 1,000,000 users: 0.666…%
+      • ≥ 2,000,000 users: 0.444…%
+      • ≥ 4,000,000 users: 0.296…%
+      • and so on.
+
+3. “Monthly active users” means unique users who access the product or service
+   in any rolling 30-day period.
+
+4. This payment obligation does not apply to non-commercial use.
+
+5. The above copyright notice and this permission notice shall be included in
+   all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

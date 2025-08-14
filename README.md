@@ -177,4 +177,6 @@ This project is ready to add:
 
 ## License
 
-MIT (or proprietary; update as needed).
+Custom Revenue-Share License — free for personal and small-scale use.  
+Requires 1% gross revenue share if used in a product or service with more than 500,000 monthly active users.  
+See [LICENSE](./LICENSE) for full terms.
