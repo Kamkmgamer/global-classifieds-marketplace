@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  # Frontend Service
+  frontend:
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./apps/frontend:/app
+      - /app/node_modules # Exclude node_modules from host bind mount
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_BACKEND_URL=http://backend:5000/api # Connects to backend service name
+    depends_on:
+      - backend
+
+  # Backend Service
+  backend:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+    ports:
+      - '5000:5000'
+    volumes:
+      - ./apps/backend:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - PORT=5000
+      - DATABASE_URL=postgresql://user:password@db:5432/classifieds_db
+      - REDIS_URL=redis://redis:6379
+      # Add other backend environment variables here (e.g., JWT_SECRET, SENDGRID_API_KEY)
+    depends_on:
+      - db
+      - redis
+
+  # PostgreSQL Database Service
+  db:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: classifieds_db
+    ports:
+      - '5432:5432'
+    volumes:
+      - db_data:/var/lib/postgresql/data # Persist database data
+
+  # Redis Cache Service
+  redis:
+    image: redis:7-alpine
+    restart: always
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data # Persist Redis data
+
+volumes:
+  db_data:
+  redis_data:
