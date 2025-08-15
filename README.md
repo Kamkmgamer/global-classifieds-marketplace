@@ -1,8 +1,49 @@
 # Global Classifieds Marketplace (Monorepo)
 
-Enterprise-grade classifieds marketplace frontend built with Next.js 15, React 19, TypeScript, Tailwind CSS, and pnpm workspaces.
+An enterprise-grade classifieds marketplace application built with a modern monorepo architecture, featuring a robust NestJS backend and a high-performance Next.js frontend. Designed for scalability, security, and an exceptional user experience.
 
-This repository is a pnpm monorepo. The primary app lives in `apps/frontend/`.
+---
+
+## Key Features & Enhancements
+
+This project has been elevated to an enterprise-grade standard with the following key features:
+
+### Backend (NestJS, TypeScript, TypeORM, PostgreSQL, Redis)
+- **Robust API:** Built with NestJS, providing a modular, scalable, and maintainable backend.
+- **Database Integration:** Persistent data storage using PostgreSQL with TypeORM for efficient and type-safe database interactions.
+- **Authentication & Authorization:** Secure JWT-based authentication system with user registration, login, and role-based access control (RBAC) for protected endpoints.
+- **Centralized Error Handling:** Global exception filters for consistent and informative error responses.
+- **Comprehensive Logging:** Global logging interceptors for detailed request and response tracking.
+- **Performance Optimization:** Integrated Redis caching for frequently accessed data (e.g., listings) to reduce database load and improve response times.
+- **Data Validation:** Strict input validation using DTOs and validation pipes for all API requests.
+
+### Frontend (Next.js 15, React 19, TypeScript, Tailwind CSS, Shadcn UI)
+- **Modern UI/UX:** Clean, consistent, and visually appealing design system built with Tailwind CSS and Shadcn UI components.
+- **Dark/Light Mode Excellence:** Seamless and WCAG-accessible dark and light themes.
+- **Intuitive User Flows:** Optimized registration, login, and listing creation processes.
+- **Enhanced User Feedback:** Implemented loading skeletons and clear empty states for a smoother user experience.
+- **Responsive Design:** Fully responsive and touch-friendly UI across all screen sizes.
+- **Authentication Integration:** Seamless integration with the backend authentication system, managing user sessions and protecting client-side routes.
+
+---
+
+## Technology Stack
+
+- **Monorepo Tool:** pnpm workspaces
+- **Backend:**
+    - **Framework:** NestJS
+    - **Language:** TypeScript
+    - **Database:** PostgreSQL
+    - **ORM:** TypeORM
+    - **Caching:** Redis (via `cache-manager-redis-store`)
+    - **Authentication:** Passport.js, JWT, bcrypt
+    - **Validation:** class-validator
+- **Frontend:**
+    - **Framework:** Next.js 15 (App Router)
+    - **Language:** TypeScript
+    - **Styling:** Tailwind CSS
+    - **UI Components:** Shadcn UI
+    - **State Management:** React Context (for authentication)
 
 ---
 
@@ -10,6 +51,7 @@ This repository is a pnpm monorepo. The primary app lives in `apps/frontend/`.
 
 - Node.js 20.x LTS (recommended)
 - pnpm 9.x or later
+- Docker & Docker Compose (for local development environment with PostgreSQL and Redis)
 - Git
 
 Check versions:
@@ -17,161 +59,90 @@ Check versions:
 ```bash
 node -v
 pnpm -v
+docker -v
+docker compose version
 ```
+
+---
+
+## Quick Start (Local Development)
+
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/Kamkmgamer/global-classifieds-marketplace.git
+    cd global-classifieds-marketplace
+    ```
+
+2.  **Install pnpm dependencies:**
+    ```bash
+    pnpm install
+    ```
+    *If prompted by pnpm to approve build scripts (e.g., for `@nestjs/core`, `sharp`), select them all and press Enter.*
+
+3.  **Set up environment variables:**
+    - Create `apps/backend/.env` with the following content (or adjust as needed):
+        ```
+        # apps/backend/.env
+        PORT=5000
+        DATABASE_URL=postgresql://user:password@db:5432/classifieds_db
+        REDIS_URL=redis://redis:6379
+        JWT_SECRET=your_super_secret_jwt_key_here # **CHANGE THIS IN PRODUCTION**
+        ```
+    - Create `apps/frontend/.env.local` with the following content:
+        ```
+        # apps/frontend/.env.local
+        NEXT_PUBLIC_BACKEND_URL=http://localhost:5000
+        NEXT_PUBLIC_SITE_URL=http://localhost:3000
+        ```
+
+4.  **Start the development environment with Docker Compose:**
+    This will spin up PostgreSQL, Redis, the NestJS backend, and the Next.js frontend.
+    ```bash
+    docker compose up --build
+    ```
+    *Ensure Docker Desktop is running if you are on Windows/macOS.*
+
+5.  **Access the application:**
+    - Frontend: `http://localhost:3000`
+    - Backend API: `http://localhost:5000` (e.g., `http://localhost:5000/listings`)
+
+---
+
+## Running Tests
+
+### Backend E2E Tests
+To run the backend end-to-end tests (which include authentication and listing creation tests):
+```bash
+pnpm --filter backend test:e2e
+```
+*Note: These tests require a running PostgreSQL and Redis instance. It's recommended to run them against a clean test database.*
 
 ---
 
 ## Project Structure
 
-- `apps/frontend/` — Next.js App Router application (TypeScript, Tailwind)
+- `apps/backend/` — NestJS backend application
+- `apps/frontend/` — Next.js frontend application
 - `packages/` — Shared packages (future expansion)
 - `pnpm-workspace.yaml` — Workspace definition
+- `docker-compose.yml` — Defines the multi-service local development environment
 
 ---
 
-## Quick Start
+## Development Guidelines
 
-1) Install dependencies at the repo root:
-
-```bash
-pnpm install
-```
-
-2) Create environment file for the frontend:
-
-Create `apps/frontend/.env.local` and set optional public site URL (used by SEO JSON-LD only; the app works without it):
-
-```bash
-# apps/frontend/.env.local
-NEXT_PUBLIC_SITE_URL=http://localhost:3000
-```
-
-3) Run the frontend app in development mode:
-
-```bash
-# From repo root
-pnpm -w --filter frontend dev
-# Or from the app folder
-cd apps/frontend && pnpm dev
-```
-
-If port 3000 is busy, Next.js will choose another port (e.g., 3002). Use the exact URL shown in the terminal.
-
-4) Open the app in your browser:
-
-- Local: `http://localhost:3000` (or whichever port was printed)
+- **TypeScript Strict Mode:** Enabled for enhanced code quality.
+- **NestJS Architecture:** Adherence to modular, service-oriented patterns.
+- **Next.js App Router:** Utilizing server components and client components (`"use client"`).
+- **Styling:** Tailwind CSS with custom design tokens (CSS variables) for theming.
+- **Accessibility:** Focus on WCAG guidelines for all UI components.
+- **Code Quality:** ESLint and Prettier configured for consistent code style.
 
 ---
 
-## Available Scripts
+## Production Deployment
 
-From repo root using workspace filter:
-
-```bash
-pnpm -w --filter frontend dev        # start dev server
-pnpm -w --filter frontend build      # build production bundle
-pnpm -w --filter frontend start      # start production server (after build)
-pnpm -w --filter frontend typecheck  # TypeScript check
-pnpm -w --filter frontend lint       # ESLint
-```
-
-Or run the same inside `apps/frontend/` without the workspace filter.
-
----
-
-## Features Included
-
-- Strong security headers and CSP (relaxed for dev HMR websockets)
-- API route with input validation using Zod: `GET/POST /api/listings`
-- Browse page with search, sort, filters, pagination, and error boundary
-- Post page with a functional listing form (mock persistence)
-- Rate limiting middleware for `/api/*`
-- SEO JSON-LD on the home page
-
----
-
-## Common Issues & Fixes
-
-- Port 3000 already in use
-  - Kill the process on port 3000 or let Next use a different port.
-  - Windows (PowerShell):
-    - Find PID: `netstat -ano | findstr :3000`
-    - Kill: `taskkill /PID <PID> /F`
-
-- Dev server stuck on "Starting…" or blank page in dev
-  - We allow `ws:`/`wss:` in `connect-src` CSP during development for HMR.
-  - Make sure you access the exact URL printed by Next.js (it may not be 3000).
-  - Clear the Next build cache: delete `apps/frontend/.next/` and re-run `pnpm dev`.
-
-- API requests failing in dev
-  - Internal fetches use relative paths (e.g., `/api/listings`), so they work on any dev port.
-  - A simple in-memory rate limiter protects `/api/*`. Bursting requests may return 429.
-
-- Lint or type errors block build
-  - Run `pnpm -w --filter frontend lint` and `pnpm -w --filter frontend typecheck`.
-  - Fix reported issues; the codebase is configured for strict TypeScript and ESLint.
-
----
-
-## Production Build & Run
-
-1) Build the app:
-
-```bash
-pnpm -w --filter frontend build
-```
-
-2) Start the production server:
-
-```bash
-pnpm -w --filter frontend start
-```
-
-By default, the production server listens on `PORT` (defaults to 3000):
-
-```bash
-# Example (Windows PowerShell)
-$env:PORT=4000; pnpm -w --filter frontend start
-```
-
----
-
-## Environment Variables (Frontend)
-
-- `NEXT_PUBLIC_SITE_URL` (optional)
-  - Used for SEO JSON-LD canonical URLs and SearchAction target.
-  - Example: `http://localhost:3000` in dev, your domain in prod.
-
-The app also validates selected env vars via `src/lib/env.ts`.
-
----
-
-## Testing (Recommended Setup)
-
-This project is ready to add:
-- Unit tests: Vitest + Testing Library
-- E2E tests: Playwright
-- CI: Lint, typecheck, test, build, and performance budgets
-
-(If you want, ask to scaffold these and set up CI workflows.)
-
----
-
-## Conventions
-
-- TypeScript strict mode is enabled.
-- App Router with server components by default; client components marked with `"use client"`.
-- Styling: Tailwind CSS; UI primitives live under `src/components/ui/`.
-- Avoid `any`; prefer precise types.
-
----
-
-## Troubleshooting Checklist
-
-- **__Wrong URL__**: Use the exact URL printed by dev server (Next may use an alternate port).
-- **__Stuck build__**: Remove `.next/` and retry. Check ESLint errors.
-- **__CSP errors__**: In dev, `ws:`/`wss:` are allowed. If blocked, restart dev to pick up config.
-- **__API 429__**: You may be rate-limited. Slow down requests or adjust middleware logic.
+(Details for production deployment would be added here in a real-world scenario, covering CI/CD, environment setup, scaling, etc.)
 
 ---
 
