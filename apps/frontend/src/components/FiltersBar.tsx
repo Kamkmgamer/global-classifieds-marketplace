@@ -43,7 +43,7 @@ export default function FiltersBar({ className }: { className?: string }) {
     else usp.delete("minPrice");
     if (maxPrice) usp.set("maxPrice", maxPrice);
     else usp.delete("maxPrice");
-    if (location) usp.set("location", location);
+    if (location && location !== "any-location") usp.set("location", location);
     else usp.delete("location");
 
     // Reset pagination when filters change
@@ -97,11 +97,11 @@ export default function FiltersBar({ className }: { className?: string }) {
           value={filters.location}
           onValueChange={(value) => set("location", value)}
         >
-          <SelectTrigger className="h-10 w-[180px]">
+          <SelectTrigger id="location" className="h-10 w-[180px]">
             <SelectValue placeholder="Any" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Any</SelectItem>
+            <SelectItem value="any-location">Any</SelectItem>
             {LOCATIONS.map((loc) => (
               <SelectItem key={loc} value={loc}>
                 {loc}

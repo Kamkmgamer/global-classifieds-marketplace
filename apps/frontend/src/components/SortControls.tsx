@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select";
 
 const SORT_OPTIONS = [
-  { value: "", label: "Relevance" },
+  { value: "default", label: "Relevance" },
   { value: "price_asc", label: "Price: Low to High" },
   { value: "price_desc", label: "Price: High to Low" },
 ];
@@ -20,12 +20,12 @@ export default function SortControls({ className }: { className?: string }) {
   const router = useRouter();
   const params = useSearchParams();
 
-  const sort = params.get("sort") || "";
+  const sort = params.get("sort") || "default";
   const pageSize = params.get("pageSize") || "12";
 
   const onChange = (key: "sort" | "pageSize", value: string) => {
     const usp = new URLSearchParams(Array.from(params.entries()));
-    if (value) usp.set(key, value);
+    if (value && value !== "default") usp.set(key, value);
     else usp.delete(key);
     // Reset to page 1 when changing sort or pageSize
     usp.set("page", "1");
@@ -37,7 +37,7 @@ export default function SortControls({ className }: { className?: string }) {
       <div className="flex flex-wrap items-center gap-3">
         <label className="text-sm text-muted-foreground">Sort</label>
         <Select value={sort} onValueChange={(value) => onChange("sort", value)}>
-          <SelectTrigger className="h-10 w-[180px]">
+          <SelectTrigger id="sort" className="h-10 w-[180px]">
             <SelectValue placeholder="Sort by" />
           </SelectTrigger>
           <SelectContent>
@@ -54,7 +54,7 @@ export default function SortControls({ className }: { className?: string }) {
           value={pageSize}
           onValueChange={(value) => onChange("pageSize", value)}
         >
-          <SelectTrigger className="h-10 w-[100px]">
+          <SelectTrigger id="pageSize" className="h-10 w-[100px]">
             <SelectValue placeholder="Per page" />
           </SelectTrigger>
           <SelectContent>

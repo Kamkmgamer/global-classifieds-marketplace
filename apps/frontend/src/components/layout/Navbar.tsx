@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { Menu as MenuIcon, X as XIcon } from "lucide-react";
 
@@ -63,6 +63,7 @@ export function Navbar() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-full max-w-xs">
+                <SheetTitle className="sr-only">Mobile Navigation</SheetTitle>
                 <div className="flex h-full flex-col">
                   <div className="flex items-center justify-between border-b pb-4">
                     <Link href="/" className="flex items-center gap-2 font-semibold" onClick={closeSheet}>

@@ -7,7 +7,6 @@ import ListingCard, { Listing } from '@/components/ListingCard'; // Import Listi
 
 // Function to fetch listings (similar to browse/page.tsx)
 async function fetchListings(limit: number = 6) {
-  console.log("Backend URL:", process.env.NEXT_PUBLIC_BACKEND_URL); // Add this line
   const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/listings?limit=${limit}`, {
     cache: "no-store",
   });

@@ -18,7 +18,21 @@ async function getListings(searchParams: URLSearchParams): Promise<ListingsRespo
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to load listings");
   const data = await res.json();
-  return data as ListingsResponse;
+
+  const limit = Number.parseInt(searchParams.get("limit") || "12", 10);
+  const page = Number.parseInt(searchParams.get("page") || "1", 10);
+  const total = data.total;
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+
+  return {
+    items: data.listings,
+    meta: {
+      total,
+      page,
+      pageSize: limit,
+      totalPages,
+    },
+  };
 }
 
 export default function BrowseClientPage() {
