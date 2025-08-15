@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export default function BrowseError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   React.useEffect(() => {
@@ -17,18 +18,10 @@ export default function BrowseError({ error, reset }: { error: Error & { digest?
         <p className="mt-2 text-xs text-muted-foreground">Error ID: {error.digest}</p>
       )}
       <div className="mt-6 flex gap-3">
-        <button
-          onClick={() => reset()}
-          className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-[rgb(var(--primary)/0.9)]"
-        >
-          Retry
-        </button>
-        <Link
-          href="/"
-          className="inline-flex items-center rounded-md border border-border bg-background px-4 py-2 text-sm hover:bg-muted"
-        >
-          Back to home
-        </Link>
+        <Button onClick={() => reset()}>Retry</Button>
+        <Button variant="outline" asChild>
+            <Link href="/">Back to home</Link>
+        </Button>
       </div>
     </div>
   );

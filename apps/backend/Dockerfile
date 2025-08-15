@@ -1,26 +1,42 @@
-# Use the official Node.js 20 LTS image
-FROM node:20-alpine
+# Stage 1: Build the application
+FROM node:20-alpine AS builder
 
-# Set the working directory inside the container
 WORKDIR /app
 
-# Copy package.json and pnpm-lock.yaml to leverage Docker cache
-COPY package.json pnpm-lock.yaml ./
-
-# Install pnpm globally (if not already there)
+# Install pnpm
 RUN npm install -g pnpm
 
-# Install dependencies (from the host, using pnpm workspace)
-RUN pnpm install --frozen-lockfile
+# Copy workspace configuration
+COPY pnpm-workspace.yaml .
+COPY package.json .
 
-# Copy the rest of the application code
+# Copy backend's package.json
+COPY apps/backend/package.json ./apps/backend/
+
+# Install only production dependencies for the backend
+RUN pnpm install --prod --filter backend
+
+# Copy the rest of the source code
 COPY . .
 
-# Build the TypeScript code
-RUN pnpm run build
+# Build the backend application
+RUN pnpm --filter backend build
 
-# Expose the port the Express app runs on
+# Stage 2: Create the production image
+FROM node:20-alpine
+
+# Create a non-root user
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+WORKDIR /app
+
+# Copy dependencies and built code from the builder stage
+COPY --from=builder /app/apps/backend/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/apps/backend/node_modules ./apps/backend/node_modules
+
+USER appuser
+
 EXPOSE 5000
 
-# Command to run the compiled JavaScript
-CMD ["pnpm", "start"]
+CMD ["node", "dist/main"]

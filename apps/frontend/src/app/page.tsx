@@ -2,9 +2,53 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { env } from '@/lib/env';
 import Script from 'next/script';
+import { Button } from '@/components/ui/button';
+import ListingCard, { Listing } from '@/components/ListingCard'; // Import Listing and ListingCard
 
-export default function Home() {
+// Function to fetch listings (similar to browse/page.tsx)
+async function fetchListings(limit: number = 6) {
+  console.log("Backend URL:", process.env.NEXT_PUBLIC_BACKEND_URL); // Add this line
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/listings?limit=${limit}`, {
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    console.error("Failed to fetch listings:", res.status, res.statusText);
+    return [];
+  }
+  const data = await res.json();
+  return data.listings as Listing[];
+}
+
+const popularCategories = [
+  { name: "Electronics", icon: "⚡️" },
+  { name: "Vehicles", icon: "🚗" },
+  { name: "Home & Garden", icon: "🏡" },
+  { name: "Fashion", icon: "👕" },
+  { name: "Sports", icon: "⚽️" },
+  { name: "Books", icon: "📚" },
+];
+
+const testimonials = [
+  {
+    quote: "This marketplace is a game-changer! I sold my old bike in less than 24 hours.",
+    author: "John Doe",
+    title: "Happy Seller",
+  },
+  {
+    quote: "Finding exactly what I needed was so easy. The chat feature made communication a breeze.",
+    author: "Jane Smith",
+    title: "Satisfied Buyer",
+  },
+  {
+    quote: "Secure and user-friendly. I highly recommend Global Classifieds to everyone!",
+    author: "Peter Jones",
+    title: "Trusted User",
+  },
+];
+
+export default async function Home() {
   const backendUrl = env.NEXT_PUBLIC_BACKEND_URL;
+  const featuredListings = await fetchListings(6); // Fetch 6 featured listings
 
   return (
     <div className="min-h-screen">
@@ -43,12 +87,12 @@ export default function Home() {
                 The modern marketplace for everything. Post listings in seconds, discover deals nearby or worldwide, and chat securely to close the sale.
               </p>
               <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                <Link href="/post" className="inline-flex items-center justify-center rounded-md bg-primary px-5 py-3 text-sm font-medium text-primary-foreground shadow hover:bg-[rgb(var(--primary)/0.9)]">
-                  Post an Ad
-                </Link>
-                <Link href="/browse" className="inline-flex items-center justify-center rounded-md border border-border bg-background px-5 py-3 text-sm font-medium hover:bg-muted">
-                  Browse Listings
-                </Link>
+                <Button asChild size="lg">
+                  <Link href="/post">Post an Ad</Link>
+                </Button>
+                <Button asChild variant="outline" size="lg">
+                  <Link href="/browse">Browse Listings</Link>
+                </Button>
               </div>
               {backendUrl && (
                 <p className="mt-4 text-xs text-muted-foreground">
@@ -60,14 +104,75 @@ export default function Home() {
               <div className="pointer-events-none absolute -right-10 -top-10 hidden size-40 rounded-full bg-[rgb(var(--primary)/0.2)] blur-3xl sm:block" />
               <div className="rounded-xl border border-border bg-white p-4 shadow-sm dark:bg-neutral-900">
                 <div className="grid grid-cols-3 gap-3">
-                  {Array.from({ length: 9 }).map((_, i) => (
-                    <div key={i} className="aspect-square overflow-hidden rounded-lg bg-muted">
-                      <Image src={`/placeholder-${(i % 3) + 1}.svg`} alt="Listing" width={200} height={200} className="size-full object-cover" />
-                    </div>
-                  ))}
+                  {/* Display featured listings */}
+                  {featuredListings.length > 0 ? (
+                    featuredListings.map((listing) => (
+                      <ListingCard key={listing.id} listing={listing} />
+                    ))
+                  ) : (
+                    Array.from({ length: 6 }).map((_, i) => (
+                      <div key={i} className="aspect-square overflow-hidden rounded-lg bg-muted">
+                        <Image src={`/placeholder-${(i % 3) + 1}.svg`} alt="Listing" width={200} height={200} className="size-full object-cover" />
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Listings Section */}
+      {featuredListings.length > 0 && (
+        <section className="border-t border-border py-12">
+          <div className="container mx-auto max-w-7xl px-4">
+            <h2 className="mb-8 text-3xl font-bold tracking-tight text-center">Featured Listings</h2>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {featuredListings.map((listing) => (
+                <ListingCard key={listing.id} listing={listing} />
+              ))}
+            </div>
+            <div className="mt-8 text-center">
+              <Button asChild variant="outline" size="lg">
+                <Link href="/browse">View All Listings</Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Popular Categories Section */}
+      <section className="border-t border-border py-12">
+        <div className="container mx-auto max-w-7xl px-4">
+          <h2 className="mb-8 text-3xl font-bold tracking-tight text-center">Popular Categories</h2>
+          <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-6">
+            {popularCategories.map((category) => (
+              <Link
+                key={category.name}
+                href={`/browse?category=${category.name.toLowerCase()}`}
+                className="flex flex-col items-center justify-center rounded-xl border border-border bg-background p-5 shadow-sm transition-colors hover:bg-muted"
+              >
+                <span className="text-4xl">{category.icon}</span>
+                <h3 className="mt-3 text-base font-semibold">{category.name}</h3>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="border-t border-border py-12">
+        <div className="container mx-auto max-w-7xl px-4">
+          <h2 className="mb-8 text-3xl font-bold tracking-tight text-center">What Our Users Say</h2>
+          <div className="grid gap-6 md:grid-cols-3">
+            {testimonials.map((testimonial, index) => (
+              <div key={index} className="rounded-xl border border-border bg-background p-6 shadow-sm">
+                <p className="text-lg italic text-muted-foreground">"{testimonial.quote}"</p>
+                <p className="mt-4 font-semibold">{testimonial.author}</p>
+                <p className="text-sm text-muted-foreground">{testimonial.title}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -98,12 +203,12 @@ export default function Home() {
             <h2 className="text-pretty text-2xl font-bold sm:text-3xl">Ready to sell something?</h2>
             <p className="max-w-2xl text-balance text-muted-foreground">Join thousands of users buying and selling safely every day. It takes less than a minute to post your first listing.</p>
             <div className="flex gap-3">
-              <Link href="/post" className="inline-flex items-center justify-center rounded-md bg-primary px-5 py-3 text-sm font-medium text-primary-foreground shadow hover:bg-[rgb(var(--primary)/0.9)]">
-                Post your first ad
-              </Link>
-              <Link href="/browse" className="inline-flex items-center justify-center rounded-md border border-border bg-background px-5 py-3 text-sm font-medium hover:bg-muted">
-                Explore listings
-              </Link>
+              <Button asChild size="lg">
+                <Link href="/post">Post your first ad</Link>
+              </Button>
+              <Button asChild variant="outline" size="lg">
+                <Link href="/browse">Explore listings</Link>
+              </Button>
             </div>
           </div>
         </div>

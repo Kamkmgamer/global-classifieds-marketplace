@@ -2,8 +2,8 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
-import Input from "@/components/ui/Input";
-import Button from "@/components/ui/Button";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export default function SearchBar({ className }: { className?: string }) {
   const router = useRouter();
@@ -23,7 +23,7 @@ export default function SearchBar({ className }: { className?: string }) {
     <form onSubmit={onSubmit} className={className} role="search">
       <div className="flex gap-2">
         <Input
-          uiSize="lg"
+          
           placeholder="Search listings…"
           value={q}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQ(e.target.value)}

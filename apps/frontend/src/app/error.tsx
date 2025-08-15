@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export default function Error({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => {
@@ -15,15 +16,10 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
       <h1 className="text-3xl font-bold tracking-tight">Something went wrong</h1>
       <p className="mt-2 text-muted-foreground">An unexpected error occurred. You can try again.</p>
       <div className="mt-6 flex justify-center gap-3">
-        <button
-          onClick={() => reset()}
-          className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-[rgb(var(--primary)/0.9)]"
-        >
-          Try again
-        </button>
-        <Link href="/" className="inline-flex items-center rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-muted">
-          Go home
-        </Link>
+        <Button onClick={() => reset()}>Try again</Button>
+        <Button variant="outline" asChild>
+          <Link href="/">Go home</Link>
+        </Button>
       </div>
     </div>
   );

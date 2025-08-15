@@ -1,15 +1,17 @@
 "use client";
 
 import * as React from "react";
-import Input from "@/components/ui/Input";
-import Button from "@/components/ui/Button";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast"; // Import useToast
 
 export default function PostPage() {
   const router = useRouter();
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const { toast } = useToast(); // Initialize useToast
 
   async function onSubmit(formData: FormData) {
     setLoading(true);
@@ -23,7 +25,7 @@ export default function PostPage() {
         description: String(formData.get("description") || "").trim() || undefined,
       };
 
-      const res = await fetch("/api/listings", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/listings`, { // Corrected URL
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -32,11 +34,20 @@ export default function PostPage() {
         const j = await res.json().catch(() => ({}));
         throw new Error(j?.error || "Failed to create listing");
       }
+      toast({ // Show success toast
+        title: "Listing created!",
+        description: "Your listing has been successfully posted.",
+      });
       router.push("/browse");
       router.refresh();
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Something went wrong";
       setError(msg);
+      toast({ // Show error toast
+        title: "Error",
+        description: msg,
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -58,23 +69,23 @@ export default function PostPage() {
           >
             <div className="grid gap-2">
               <label htmlFor="title" className="text-sm font-medium">Title</label>
-              <Input id="title" name="title" placeholder="Vintage road bike" required uiSize="lg" />
+              <Input id="title" name="title" placeholder="Vintage road bike" required  />
             </div>
 
             <div className="grid gap-2 sm:grid-cols-2">
               <div className="grid gap-2">
                 <label htmlFor="price" className="text-sm font-medium">Price (USD)</label>
-                <Input id="price" name="price" inputMode="numeric" pattern="[0-9]*" placeholder="250" required uiSize="lg" />
+                <Input id="price" name="price" inputMode="numeric" pattern="[0-9]*" placeholder="250" required  />
               </div>
               <div className="grid gap-2">
                 <label htmlFor="location" className="text-sm font-medium">Location</label>
-                <Input id="location" name="location" placeholder="Berlin" uiSize="lg" />
+                <Input id="location" name="location" placeholder="Berlin"  />
               </div>
             </div>
 
             <div className="grid gap-2">
               <label htmlFor="image" className="text-sm font-medium">Image URL</label>
-              <Input id="image" name="image" type="url" placeholder="https://..." uiSize="lg" />
+              <Input id="image" name="image" type="url" placeholder="https://..."  />
             </div>
 
             <div className="grid gap-2">

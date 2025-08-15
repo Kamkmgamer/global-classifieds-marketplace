@@ -2,8 +2,15 @@
 
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Input from "@/components/ui/Input";
-import Button from "@/components/ui/Button";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const LOCATIONS = ["NYC", "Berlin", "Tokyo", "SF", "London"];
 
@@ -32,9 +39,12 @@ export default function FiltersBar({ className }: { className?: string }) {
 
     const { minPrice, maxPrice, location } = filters;
 
-    if (minPrice) usp.set("minPrice", minPrice); else usp.delete("minPrice");
-    if (maxPrice) usp.set("maxPrice", maxPrice); else usp.delete("maxPrice");
-    if (location) usp.set("location", location); else usp.delete("location");
+    if (minPrice) usp.set("minPrice", minPrice);
+    else usp.delete("minPrice");
+    if (maxPrice) usp.set("maxPrice", maxPrice);
+    else usp.delete("maxPrice");
+    if (location) usp.set("location", location);
+    else usp.delete("location");
 
     // Reset pagination when filters change
     usp.set("page", "1");
@@ -49,12 +59,16 @@ export default function FiltersBar({ className }: { className?: string }) {
   }
 
   return (
-    <form onSubmit={onSubmit} className={`flex flex-wrap items-end gap-2 ${className || ""}`}>
+    <form
+      onSubmit={onSubmit}
+      className={`flex flex-wrap items-end gap-2 ${className || ""}`}
+    >
       <div className="flex flex-col">
-        <label htmlFor="minPrice" className="text-xs text-muted-foreground">Min Price</label>
+        <label htmlFor="minPrice" className="text-xs text-muted-foreground">
+          Min Price
+        </label>
         <Input
           id="minPrice"
-          uiSize="lg"
           inputMode="numeric"
           pattern="[0-9]*"
           placeholder="0"
@@ -63,10 +77,11 @@ export default function FiltersBar({ className }: { className?: string }) {
         />
       </div>
       <div className="flex flex-col">
-        <label htmlFor="maxPrice" className="text-xs text-muted-foreground">Max Price</label>
+        <label htmlFor="maxPrice" className="text-xs text-muted-foreground">
+          Max Price
+        </label>
         <Input
           id="maxPrice"
-          uiSize="lg"
           inputMode="numeric"
           pattern="[0-9]*"
           placeholder="2000"
@@ -75,30 +90,31 @@ export default function FiltersBar({ className }: { className?: string }) {
         />
       </div>
       <div className="flex flex-col">
-        <label htmlFor="location" className="text-xs text-muted-foreground">Location</label>
-        <select
-          id="location"
-          className="h-12 rounded-md border border-border bg-background px-3 text-sm"
+        <label htmlFor="location" className="text-xs text-muted-foreground">
+          Location
+        </label>
+        <Select
           value={filters.location}
-          onChange={(e) => set("location", e.target.value)}
+          onValueChange={(value) => set("location", value)}
         >
-          <option value="">Any</option>
-          {LOCATIONS.map((loc) => (
-            <option key={loc} value={loc}>
-              {loc}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger className="h-10 w-[180px]">
+            <SelectValue placeholder="Any" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">Any</SelectItem>
+            {LOCATIONS.map((loc) => (
+              <SelectItem key={loc} value={loc}>
+                {loc}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       <div className="flex gap-2">
         <Button className="h-12 px-5">Apply</Button>
-        <button
-          type="button"
-          onClick={onClear}
-          className="h-12 rounded-md border border-border px-4 text-sm hover:bg-muted"
-        >
+        <Button type="button" variant="outline" onClick={onClear} className="h-12 px-5">
           Clear
-        </button>
+        </Button>
       </div>
     </form>
   );

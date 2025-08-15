@@ -1,27 +1,45 @@
-# Use the official Node.js 20 LTS image
-FROM node:20-alpine
+# Stage 1: Build the application
+FROM node:20-alpine AS builder
 
-# Set the working directory inside the container
 WORKDIR /app
 
-# Copy package.json and pnpm-lock.yaml to leverage Docker cache
-COPY package.json pnpm-lock.yaml ./
-
-# Install pnpm globally (if not already there)
+# Install pnpm
 RUN npm install -g pnpm
 
-# Install dependencies (from the host, using pnpm workspace)
-# We use --frozen-lockfile to ensure reproducible builds
-RUN pnpm install --frozen-lockfile
+# Copy workspace configuration
+COPY pnpm-workspace.yaml .
+COPY package.json .
 
-# Copy the rest of the application code
+# Copy frontend's package.json
+COPY apps/frontend/package.json ./apps/frontend/
+
+# Install only production dependencies for the frontend
+RUN pnpm install --prod --filter frontend
+
+# Copy the rest of the source code
 COPY . .
 
-# Build the Next.js application
-RUN pnpm run build
+# Build the frontend application
+RUN pnpm --filter frontend build
 
-# Expose the port Next.js runs on
+# Stage 2: Create the production image
+FROM node:20-alpine
+
+# Create a non-root user
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+WORKDIR /app
+
+# Set the user
+USER appuser
+
+# Copy the built application from the builder stage
+COPY --from=builder /app/apps/frontend/.next ./apps/frontend/.next
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/apps/frontend/node_modules ./apps/frontend/node_modules
+COPY --from=builder /app/apps/frontend/public ./apps/frontend/public
+COPY --from=builder /app/apps/frontend/package.json ./apps/frontend/
+
 EXPOSE 3000
 
-# Command to run the Next.js application in production mode
-CMD ["pnpm", "start"]
+CMD ["pnpm", "--filter", "frontend", "start"]
