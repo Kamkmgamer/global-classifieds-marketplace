@@ -7,6 +7,7 @@ import Link from "next/link";
 import FiltersBar from "@/components/FiltersBar";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import SkeletonCard from "@/components/SkeletonCard"; // Import SkeletonCard
 
 type ListingsResponse = {
   items: Listing[];
@@ -57,7 +58,26 @@ export default function BrowseClientPage() {
   }
 
   if (!listingsData) {
-    return <div className="container mx-auto max-w-7xl px-4 py-8">Loading...</div>;
+    return (
+      <div className="container mx-auto max-w-7xl px-4 py-8">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold tracking-tight">Browse Listings</h1>
+          <p className="text-sm text-muted-foreground">Loading listings...</p>
+        </div>
+        <div className="mb-4 flex flex-col gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="h-10 w-full rounded-md bg-muted sm:w-64" />
+            <div className="h-10 w-full rounded-md bg-muted sm:w-48" />
+          </div>
+          <div className="h-10 w-full rounded-md bg-muted" />
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
+      </div>
+    );
   }
 
   const { items, meta } = listingsData;
@@ -76,11 +96,38 @@ export default function BrowseClientPage() {
         </div>
         <FiltersBar />
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {items.map((l) => (
-          <ListingCard key={l.id} listing={l} />
-        ))}
-      </div>
+      {items.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="h-12 w-12 text-muted-foreground"
+          >
+            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" x2="8" y1="13" y2="13"></line>
+            <line x1="16" x2="8" y1="17" y2="17"></line>
+            <line x1="10" x2="8" y1="9" y2="9"></line>
+          </svg>
+          <h3 className="mt-4 text-xl font-semibold">No listings found</h3>
+          <p className="mt-2 text-muted-foreground">
+            Try adjusting your search or filters.
+          </p>
+        </div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {items.map((l) => (
+            <ListingCard key={l.id} listing={l} />
+          ))}
+        </div>
+      )}
       <div className="mt-6 flex items-center justify-between">
         <PaginationControls meta={meta} q={searchParams.get("q") || undefined} sort={searchParams.get("sort") || undefined} minPrice={searchParams.get("minPrice") ? Number.parseInt(searchParams.get("minPrice")!, 10) : undefined} maxPrice={searchParams.get("maxPrice") ? Number.parseInt(searchParams.get("maxPrice")!, 10) : undefined} location={searchParams.get("location") || undefined} />
       </div>

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { Menu as MenuIcon, X as XIcon } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth"; // Import useAuth
 
 const navLinks = [
   { href: "/browse", label: "Browse" },
@@ -17,6 +18,7 @@ const navLinks = [
 export function Navbar() {
   const pathname = usePathname();
   const [isSheetOpen, setSheetOpen] = useState(false);
+  const { isAuthenticated, logout } = useAuth(); // Use useAuth hook
 
   const closeSheet = () => setSheetOpen(false);
 
@@ -42,12 +44,28 @@ export function Navbar() {
                 {label}
               </Link>
             ))}
+            {isAuthenticated ? (
+              <>
+                <Button asChild>
+                  <Link href="/post">Post an Ad</Link>
+                </Button>
+                <Button variant="outline" onClick={logout}>
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button asChild variant="outline">
+                  <Link href="/login">Login</Link>
+                </Button>
+                <Button asChild>
+                  <Link href="/register">Register</Link>
+                </Button>
+              </>
+            )}
           </div>
           <div className="hidden items-center gap-2 md:flex">
             <ThemeToggle />
-            <Button asChild>
-              <Link href="/post">Post an Ad</Link>
-            </Button>
           </div>
           <div className="flex items-center gap-2 md:hidden">
             <ThemeToggle />
@@ -89,11 +107,25 @@ export function Navbar() {
                         {label}
                       </Link>
                     ))}
-                  </div>
-                  <div className="mt-auto border-t pt-6">
-                    <Button asChild className="w-full">
-                      <Link href="/post" onClick={closeSheet}>Post an Ad</Link>
-                    </Button>
+                    {isAuthenticated ? (
+                      <>
+                        <Button asChild className="w-full" onClick={closeSheet}>
+                          <Link href="/post">Post an Ad</Link>
+                        </Button>
+                        <Button variant="outline" className="w-full" onClick={() => { logout(); closeSheet(); }}>
+                          Logout
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button asChild variant="outline" className="w-full" onClick={closeSheet}>
+                          <Link href="/login">Login</Link>
+                        </Button>
+                        <Button asChild className="w-full" onClick={closeSheet}>
+                          <Link href="/register">Register</Link>
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
               </SheetContent>

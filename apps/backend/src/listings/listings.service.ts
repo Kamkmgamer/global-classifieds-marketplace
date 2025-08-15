@@ -1,83 +1,23 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, CacheKey, CacheTTL } from '@nestjs/common'; // Added CacheKey, CacheTTL
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, Like, Between, MoreThanOrEqual, LessThanOrEqual } from 'typeorm';
+import { Listing } from './listing.entity';
 
 @Injectable()
 export class ListingsService {
-  private listings = [
-    {
-      id: '1',
-      title: 'Vintage Road Bike',
-      price: 500,
-      image: '/placeholder-1.svg',
-      location: 'Berlin',
-    },
-    {
-      id: '2',
-      title: 'Antique Wooden Chair',
-      price: 120,
-      image: '/placeholder-2.svg',
-      location: 'NYC',
-    },
-    {
-      id: '3',
-      title: 'Designer Handbag',
-      price: 800,
-      image: '/placeholder-3.svg',
-      location: 'London',
-    },
-    {
-      id: '4',
-      title: 'Rare Comic Book Collection',
-      price: 1500,
-      image: '/placeholder-1.svg',
-      location: 'SF',
-    },
-    {
-      id: '5',
-      title: 'Handmade Ceramic Vase',
-      price: 75,
-      image: '/placeholder-2.svg',
-      location: 'Tokyo',
-    },
-    {
-      id: '6',
-      title: 'Classic Vinyl Player',
-      price: 300,
-      image: '/placeholder-3.svg',
-      location: 'Berlin',
-    },
-    {
-      id: '7',
-      title: 'Limited Edition Sneakers',
-      price: 250,
-      image: '/placeholder-1.svg',
-      location: 'NYC',
-    },
-    {
-      id: '8',
-      title: 'Vintage Camera',
-      price: 400,
-      image: '/placeholder-2.svg',
-      location: 'London',
-    },
-    {
-      id: '9',
-      title: 'Custom Gaming PC',
-      price: 2000,
-      image: '/placeholder-3.svg',
-      location: 'SF',
-    },
-  ];
+  constructor(
+    @InjectRepository(Listing)
+    private listingRepository: Repository<Listing>,
+  ) {}
 
-  create(listing: any) {
-    const newListing = {
-      id: (this.listings.length + 1).toString(),
-      ...listing,
-    };
-    this.listings.push(newListing);
-    return newListing;
+  async create(listing: Partial<Listing>): Promise<Listing> {
+    const newListing = this.listingRepository.create(listing);
+    return this.listingRepository.save(newListing);
   }
 
-  findAll(query: {
+  @CacheKey('listings_cache') // Define a base cache key
+  @CacheTTL(60) // Cache for 60 seconds
+  async findAll(query: {
     limit?: string;
     page?: string;
     q?: string;
@@ -85,54 +25,50 @@ export class ListingsService {
     maxPrice?: string;
     location?: string;
     sort?: string;
-  }) {
+  }): Promise<{ listings: Listing[]; total: number }> {
     const limit = Number.parseInt(query.limit || '12', 10);
     const page = Number.parseInt(query.page || '1', 10);
-    const offset = (page - 1) * limit;
+    const skip = (page - 1) * limit;
 
-    let filteredListings = this.listings;
+    const where: any = {};
+    let order: { [key: string]: 'ASC' | 'DESC' } = {};
 
     if (query.q) {
-      const searchTerm = query.q.toLowerCase();
-      filteredListings = filteredListings.filter(
-        (listing) =>
-          listing.title.toLowerCase().includes(searchTerm) ||
-          listing.location.toLowerCase().includes(searchTerm),
-      );
+      where.title = Like(`%${query.q}%`);
+      // Could also add OR conditions for location, description etc.
+      // For simplicity, only title is searched for now.
     }
 
-    if (query.minPrice) {
-      const minPrice = Number.parseInt(query.minPrice, 10);
-      filteredListings = filteredListings.filter(
-        (listing) => listing.price >= minPrice,
+    if (query.minPrice && query.maxPrice) {
+      where.price = Between(
+        Number.parseInt(query.minPrice, 10),
+        Number.parseInt(query.maxPrice, 10),
       );
+    } else if (query.minPrice) {
+      where.price = MoreThanOrEqual(Number.parseInt(query.minPrice, 10));
+    } else if (query.maxPrice) {
+      where.price = LessThanOrEqual(Number.parseInt(query.maxPrice, 10));
     }
 
-    if (query.maxPrice) {
-      const maxPrice = Number.parseInt(query.maxPrice, 10);
-      filteredListings = filteredListings.filter(
-        (listing) => listing.price <= maxPrice,
-      );
-    }
-
-    if (query.location) {
-      filteredListings = filteredListings.filter(
-        (listing) =>
-          listing.location.toLowerCase() === query.location.toLowerCase(),
-      );
+    if (query.location && query.location !== 'any-location') {
+      where.location = query.location;
     }
 
     if (query.sort === 'price-asc') {
-      filteredListings.sort((a, b) => a.price - b.price);
+      order = { price: 'ASC' };
     } else if (query.sort === 'price-desc') {
-      filteredListings.sort((a, b) => b.price - a.price);
+      order = { price: 'DESC' };
+    } else {
+      order = { createdAt: 'DESC' }; // Default sort by newest
     }
 
-    const paginatedListings = filteredListings.slice(offset, offset + limit);
+    const [listings, total] = await this.listingRepository.findAndCount({
+      where,
+      order,
+      skip,
+      take: limit,
+    });
 
-    return {
-      listings: paginatedListings,
-      total: filteredListings.length,
-    };
+    return { listings, total };
   }
 }

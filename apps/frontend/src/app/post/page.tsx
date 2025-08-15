@@ -6,12 +6,21 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast"; // Import useToast
+import { useAuth } from "@/hooks/use-auth"; // Import useAuth
 
 export default function PostPage() {
   const router = useRouter();
+  const { toast } = useToast(); // Initialize useToast
+  const { isAuthenticated } = useAuth(); // Use useAuth hook
+
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const { toast } = useToast(); // Initialize useToast
+
+  React.useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/login"); // Redirect to login if not authenticated
+    }
+  }, [isAuthenticated, router]);
 
   async function onSubmit(formData: FormData) {
     setLoading(true);
@@ -25,9 +34,17 @@ export default function PostPage() {
         description: String(formData.get("description") || "").trim() || undefined,
       };
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/listings`, { // Corrected URL
+      const token = localStorage.getItem("access_token"); // Get token
+      if (!token) {
+        throw new Error("Authentication token not found.");
+      }
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/listings`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
         body: JSON.stringify(payload),
       });
       if (!res.ok) {
@@ -94,7 +111,7 @@ export default function PostPage() {
                 id="description"
                 name="description"
                 rows={5}
-                className="h-auto w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                 placeholder="Add details about condition, accessories, etc."
               />
             </div>

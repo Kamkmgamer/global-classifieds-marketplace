@@ -1,4 +1,9 @@
 packages:
-  - 'apps/*'
-  - 'packages/*'
-  - 'apps/backend'
+  - apps/*
+  - packages/*
+  - apps/backend
+
+onlyBuiltDependencies:
+  - '@nestjs/core'
+  - sharp
+  - unrs-resolver

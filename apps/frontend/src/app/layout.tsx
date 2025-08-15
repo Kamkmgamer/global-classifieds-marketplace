@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Toaster } from "@/components/ui/toaster"; // Import Toaster
+import { AuthProvider } from "@/hooks/use-auth"; // Import AuthProvider
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -75,13 +76,15 @@ export default function RootLayout({
           Skip to content
         </a>
         <ThemeProvider>
-          <div className="min-h-screen flex flex-col">
-            <Navbar />
-            <main id="content" className="flex-1 focus:outline-none">
-              {children}
-            </main>
-            <Footer />
-          </div>
+          <AuthProvider> {/* Wrap with AuthProvider */}
+            <div className="min-h-screen flex flex-col">
+              <Navbar />
+              <main id="content" className="flex-1 focus:outline-none">
+                {children}
+              </main>
+              <Footer />
+            </div>
+          </AuthProvider>
         </ThemeProvider>
         <Toaster /> {/* Add Toaster component here */}
       </body>
