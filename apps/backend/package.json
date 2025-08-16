@@ -15,7 +15,11 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "migration:generate": "node -r ts-node/register -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:generate -d ./apps/backend/ormconfig.ts ./apps/backend/src/migrations/AutoMigration",
+    "migration:create": "node -r ts-node/register -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:create ./apps/backend/src/migrations/ManualMigration",
+    "migration:run": "node -r ts-node/register -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:run -d ./apps/backend/ormconfig.ts",
+    "migration:revert": "node -r ts-node/register -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:revert -d ./apps/backend/ormconfig.ts"
   },
   "keywords": [],
   "author": "",
@@ -30,6 +34,7 @@
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/typeorm": "^11.0.0",
+    "dotenv": "^16.4.5",
     "bcrypt": "^6.0.0",
     "cache-manager": "^7.1.1",
     "cache-manager-redis-store": "^3.0.1",

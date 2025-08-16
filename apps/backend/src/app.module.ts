@@ -26,7 +26,11 @@ import * as redisStore from 'cache-manager-redis-store'; // Import redisStore
         password: configService.get<string>('POSTGRES_PASSWORD', 'password'),
         database: configService.get<string>('POSTGRES_DB', 'classifieds_db'),
         entities: [Listing, User], // Add User entity
-        synchronize: true, // Auto-create schema (for development only)
+        // IMPORTANT: Never use synchronize in production. Enable only in development via env.
+        // Defaults: true in non-production, false in production, can be overridden with TYPEORM_SYNCHRONIZE.
+        synchronize:
+          (configService.get<string>('NODE_ENV') !== 'production') &&
+          (configService.get<string>('TYPEORM_SYNCHRONIZE', 'true').toLowerCase() === 'true'),
         logging: false, // Disable logging SQL queries
       }),
       inject: [ConfigService],

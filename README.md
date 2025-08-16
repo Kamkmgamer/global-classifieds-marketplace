@@ -131,6 +131,46 @@ pnpm --filter backend test:e2e
 
 ---
 
+## Database Schema Management (TypeORM Migrations)
+
+Production deployments must not use `synchronize: true`. This project is configured to:
+
+- Disable TypeORM schema sync in production.
+- Use migrations for schema changes.
+
+Backend changes:
+
+- Config is in `apps/backend/src/app.module.ts` (env-driven `synchronize`).
+- TypeORM DataSource for CLI is `apps/backend/ormconfig.ts`.
+- Migration scripts are available in `apps/backend/package.json`.
+
+Common commands (run from repo root):
+
+```bash
+# Generate a migration from current entity changes
+pnpm --filter backend run migration:generate
+
+# Create an empty migration (name "ManualMigration")
+pnpm --filter backend run migration:create
+
+# Run migrations
+pnpm --filter backend run migration:run
+
+# Revert last migration
+pnpm --filter backend run migration:revert
+```
+
+Environment:
+
+- Local dev: `.env.development` includes `TYPEORM_SYNCHRONIZE=true` to ease local iteration.
+- Staging/Prod: ensure `TYPEORM_SYNCHRONIZE=false` and run migrations during deployment.
+
+CI/CD Guidance:
+
+- Add a deploy step to run `migration:run` against the target environment/database.
+
+---
+
 ## Project Structure
 
 - `apps/backend/` — NestJS backend application
