@@ -47,8 +47,9 @@ export default function BrowseClientPage() {
       try {
         const data = await getListings(searchParams);
         setListingsData(data);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : "Failed to load listings";
+        setError(msg);
       }
     };
     fetchListingsData();

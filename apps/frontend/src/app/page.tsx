@@ -170,7 +170,7 @@ export default async function Home() {
           <div className="grid gap-6 md:grid-cols-3">
             {testimonials.map((testimonial, index) => (
               <div key={index} className="rounded-xl border border-border bg-background p-6 shadow-sm">
-                <p className="text-lg italic text-muted-foreground">"{testimonial.quote}"</p>
+                <p className="text-lg italic text-muted-foreground">&quot;{testimonial.quote}&quot;</p>
                 <p className="mt-4 font-semibold">{testimonial.author}</p>
                 <p className="text-sm text-muted-foreground">{testimonial.title}</p>
               </div>

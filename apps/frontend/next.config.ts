@@ -15,14 +15,28 @@ function buildCsp() {
   const scriptSrc = isDev
     ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
     : "script-src 'self' 'unsafe-inline'";
+
+  // Allow connecting to configured backend origin (if present)
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+  let backendOrigin = "";
+  try {
+    if (backendUrl) backendOrigin = new URL(backendUrl).origin;
+  } catch {
+    // ignore invalid URL
+  }
+
+  const connectSrc = isDev
+    ? `connect-src 'self' http: https: ws: wss: ${backendOrigin}`.trim()
+    : `connect-src 'self' https: ${backendOrigin}`.trim();
+
   return [
     "default-src 'self'",
     scriptSrc,
     "style-src 'self' 'unsafe-inline' https: data:",
     "img-src 'self' data: blob: https:",
     "font-src 'self' data: https:",
-    // Allow websocket connections for HMR in dev
-    isDev ? "connect-src 'self' http: https: ws: wss:" : "connect-src 'self' https: http:",
+    // Allow websocket connections for HMR in dev and the API/backend origin
+    connectSrc,
     "frame-ancestors 'self'",
     "form-action 'self'",
     // Opt-in to powerful isolation without breaking 3rd parties (avoid COEP here)

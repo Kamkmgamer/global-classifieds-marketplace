@@ -32,11 +32,12 @@ export default function RegisterPage() {
         description: "You can now log in with your new account.",
       });
       router.push("/login");
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Registration failed";
+      setError(msg);
       toast({
         title: "Error",
-        description: e.message,
+        description: msg,
         variant: "destructive",
       });
     } finally {

@@ -32,21 +32,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const login = (token: string) => {
+  const login = React.useCallback((token: string) => {
     localStorage.setItem("access_token", token);
     const payload = JSON.parse(atob(token.split('.')[1]));
     setUser({ email: payload.email, id: payload.sub, role: payload.role });
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = React.useCallback(() => {
     localStorage.removeItem("access_token");
+    // Clear session presence cookie used by middleware auth guard
+    document.cookie = "session=; Path=/; Max-Age=0; SameSite=Lax";
     setUser(null);
     router.push("/login"); // Redirect to login page on logout
-  };
+  }, [router]);
 
   const isAuthenticated = !!user;
 
-  const value = React.useMemo(() => ({ user, login, logout, isAuthenticated }), [user, isAuthenticated]);
+  const value = React.useMemo(() => ({ user, login, logout, isAuthenticated }), [user, login, logout, isAuthenticated]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

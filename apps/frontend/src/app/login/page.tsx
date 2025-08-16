@@ -25,20 +25,23 @@ export default function LoginPage() {
     const password = formData.get("password") as string;
 
     try {
-      const data = await api.post<any>("/auth/login", { email, password });
-      // TODO: Securely store the JWT (e.g., in HttpOnly cookie)
-      localStorage.setItem("access_token", data.access_token); // For demonstration, use localStorage
+      const data = await api.post<undefined, { access_token: string }>("/auth/login", { email, password });
+      // TODO: Backend should set an HttpOnly session cookie. Temporary client-side fallbacks below.
+      localStorage.setItem("access_token", data.access_token);
+      // Set a non-HttpOnly session presence cookie for middleware auth guard (no sensitive data stored)
+      document.cookie = `session=1; Path=/; Max-Age=${60 * 60 * 24 * 7}; SameSite=Lax`;
 
       toast({
         title: "Login Successful!",
         description: "You are now logged in.",
       });
       router.push("/browse"); // Redirect to browse page after login
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Login failed";
+      setError(msg);
       toast({
         title: "Error",
-        description: e.message,
+        description: msg,
         variant: "destructive",
       });
     } finally {
@@ -67,7 +70,7 @@ export default function LoginPage() {
               {loading ? "Logging in..." : "Login"}
             </Button>
             <p className="text-center text-sm text-muted-foreground">
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
               <Link href="/register" className="underline">
                 Register
               </Link>

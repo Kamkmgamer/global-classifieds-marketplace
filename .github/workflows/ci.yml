@@ -41,6 +41,9 @@ jobs:
       - name: Build
         run: pnpm -w build
 
+      - name: Dependency Scan (pnpm audit)
+        run: pnpm audit --audit-level high || true
+
       - name: Generate SBOM (CycloneDX)
         run: |
           pnpm dlx @cyclonedx/cyclonedx-npm --output-file sbom-root.json --spec-version 1.5
@@ -55,3 +58,22 @@ jobs:
             sbom-root.json
             sbom-frontend.json
             sbom-backend.json
+
+      - name: Secret Scan (Gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        with:
+          config-path: ''
+        env:
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Vulnerability Scan (Trivy FS)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: 'fs'
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+          exit-code: '0'
+          vuln-type: 'os,library'
+          scanners: 'vuln,secret,misconfig'

@@ -5,7 +5,20 @@ import { rateLimit } from "@/lib/rateLimit";
 // For distributed deployments, move buckets to a shared store (e.g., Redis) and use IP from edge.
 export function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
-  // Apply only to API routes via matcher below, but keep guard for safety
+  // Auth guard for protected routes (expand as needed)
+  const protectedPaths = ["/post", "/account", "/account/settings"];
+  const isProtected = protectedPaths.some((p) => path === p || path.startsWith(`${p}/`));
+  if (isProtected) {
+    const session = req.cookies.get("session");
+    if (!session || !session.value) {
+      const url = req.nextUrl.clone();
+      url.pathname = "/login";
+      url.searchParams.set("next", path);
+      return NextResponse.redirect(url);
+    }
+  }
+
+  // Apply API rate limiting
   if (!path.startsWith("/api/")) return NextResponse.next();
 
   const ip =
@@ -42,5 +55,6 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/api/:path*"],
+  // Run on API routes for rate limiting, and on protected pages for auth
+  matcher: ["/api/:path*", "/post", "/post/:path*", "/account", "/account/:path*"],
 };

@@ -6,7 +6,7 @@ export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 export type HttpOptions<TSchema extends z.ZodTypeAny | undefined = undefined> = {
   method?: HttpMethod;
   headers?: HeadersInit;
-  body?: any;
+  body?: unknown;
   // Next.js fetch options
   cache?: RequestCache;
   next?: { revalidate?: number };
@@ -63,7 +63,7 @@ export async function http<TSchema extends z.ZodTypeAny | undefined = undefined,
       const res = await fetch(withBase(url), {
         method,
         headers: finalHeaders,
-        body: body ? JSON.stringify(body) : undefined,
+        body: body ? JSON.stringify(body as unknown as Record<string, unknown>) : undefined,
         cache,
         next,
         signal: controller.signal,
