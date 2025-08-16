@@ -108,6 +108,18 @@ docker compose version
 
 ---
 
+## Common Scripts
+
+- **Install**: `pnpm install`
+- **Dev (frontend)**: `pnpm --filter frontend run dev`
+- **Dev (backend)**: `pnpm --filter backend run start:dev`
+- **Lint**: `pnpm --filter frontend run lint`
+- **Typecheck**: `pnpm --filter frontend run typecheck`
+- **Build**: `pnpm --filter frontend run build` and `pnpm --filter backend run build`
+- **Format**: `pnpm --filter frontend run format`
+
+---
+
 ## Running Tests
 
 ### Backend E2E Tests
@@ -137,6 +149,24 @@ pnpm --filter backend test:e2e
 - **Styling:** Tailwind CSS with custom design tokens (CSS variables) for theming.
 - **Accessibility:** Focus on WCAG guidelines for all UI components.
 - **Code Quality:** ESLint and Prettier configured for consistent code style.
+
+---
+
+## Troubleshooting
+
+- **metadataBase warning during Next.js build**  
+  If you see a warning like: `metadataBase property in metadata export is not set ... using "http://localhost:3000"`, define a canonical site URL. Example for `apps/frontend/src/app/layout.tsx`:
+  ```ts
+  export const metadata = {
+    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
+  };
+  ```
+
+- **Dynamic server usage: Route / couldn't be rendered statically**  
+  This occurs when a page uses `fetch` with `no-store` or otherwise dynamic data during build. Options to resolve:
+  - Make the page explicitly dynamic: `export const dynamic = "force-dynamic";`
+  - Or allow ISR by adding revalidation to fetch: `fetch(url, { next: { revalidate: 60 } })` and remove `cache: "no-store"`.
+  - Or fetch on the client side instead of at build-time if prerendering is required.
 
 ---
 
