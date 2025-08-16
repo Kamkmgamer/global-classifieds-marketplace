@@ -64,7 +64,6 @@ jobs:
         with:
           config-path: ''
         env:
-          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Vulnerability Scan (Trivy FS)
