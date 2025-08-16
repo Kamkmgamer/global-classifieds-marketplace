@@ -3,19 +3,22 @@ import Link from 'next/link';
 import { env } from '@/lib/env';
 import Script from 'next/script';
 import { Button } from '@/components/ui/button';
-import ListingCard, { Listing } from '@/components/ListingCard'; // Import Listing and ListingCard
+import ListingCard from '@/components/ListingCard';
+import { api } from '@/lib/http';
+import { ListingsResponseSchema } from '@/lib/schemas';
 
-// Function to fetch listings (similar to browse/page.tsx)
+// Function to fetch listings through the robust API client
 async function fetchListings(limit: number = 6) {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/listings?limit=${limit}`, {
-    cache: "no-store",
-  });
-  if (!res.ok) {
-    console.error("Failed to fetch listings:", res.status, res.statusText);
+  try {
+    const data = await api.get<typeof ListingsResponseSchema, { listings: Array<{ id: string; title: string; price: number; image: string; location?: string }> }>(
+      `/listings?limit=${limit}`,
+      { cache: 'no-store', schema: ListingsResponseSchema, retries: 2, timeoutMs: 8000 }
+    );
+    return data.listings;
+  } catch (err) {
+    console.error('Failed to fetch listings:', err);
     return [];
   }
-  const data = await res.json();
-  return data.listings as Listing[];
 }
 
 const popularCategories = [
@@ -56,7 +59,7 @@ export default async function Home() {
           '@context': 'https://schema.org',
           '@type': 'Organization',
           name: 'Global Classifieds',
-          url: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
+          url: env.NEXT_PUBLIC_SITE_URL,
           logo: '/favicon.ico',
         })}
       </Script>
@@ -65,10 +68,10 @@ export default async function Home() {
           '@context': 'https://schema.org',
           '@type': 'WebSite',
           name: 'Global Classifieds Marketplace',
-          url: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
+          url: env.NEXT_PUBLIC_SITE_URL,
           potentialAction: {
             '@type': 'SearchAction',
-            target: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/browse?q={search_term_string}`,
+            target: `${env.NEXT_PUBLIC_SITE_URL}/browse?q={search_term_string}`,
             'query-input': 'required name=search_term_string',
           },
         })}

@@ -1,38 +1,39 @@
 "use client";
 
 import SearchBar from "@/components/SearchBar";
-import ListingCard, { Listing } from "@/components/ListingCard";
+import ListingCard from "@/components/ListingCard";
 import SortControls from "@/components/SortControls";
 import Link from "next/link";
 import FiltersBar from "@/components/FiltersBar";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import SkeletonCard from "@/components/SkeletonCard"; // Import SkeletonCard
+import { api } from "@/lib/http";
+import { BrowseListingsResponseSchema, parsePage, parsePageSize } from "@/lib/schemas";
 
 type ListingsResponse = {
-  items: Listing[];
+  items: Array<{ id: string; title: string; price: number; image: string; location?: string }>;
   meta: { total: number; page: number; pageSize: number; totalPages: number };
 };
 
 async function getListings(searchParams: URLSearchParams): Promise<ListingsResponse> {
-  const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/listings?${searchParams.toString()}`;
-  const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) throw new Error("Failed to load listings");
-  const data = await res.json();
+  const limit = parsePageSize(searchParams.get("pageSize"), 12);
+  const page = parsePage(searchParams.get("page"), 1);
+  const usp = new URLSearchParams(searchParams);
+  usp.set("limit", String(limit));
+  usp.set("page", String(page));
 
-  const limit = Number.parseInt(searchParams.get("limit") || "12", 10);
-  const page = Number.parseInt(searchParams.get("page") || "1", 10);
+  const data = await api.get<typeof BrowseListingsResponseSchema, { listings: ListingsResponse["items"]; total: number }>(
+    `/listings?${usp.toString()}`,
+    { cache: "no-store", schema: BrowseListingsResponseSchema, retries: 2 }
+  );
+
   const total = data.total;
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
   return {
     items: data.listings,
-    meta: {
-      total,
-      page,
-      pageSize: limit,
-      totalPages,
-    },
+    meta: { total, page, pageSize: limit, totalPages },
   };
 }
 
