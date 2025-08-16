@@ -4,7 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint": "pnpm -r run lint",
+    "typecheck": "pnpm -r run typecheck",
+    "build": "pnpm -r run build",
+    "test": "pnpm -r run test",
+    "format": "pnpm -r run format",
+    "format:check": "pnpm -r run format:check",
+    "test:original": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",

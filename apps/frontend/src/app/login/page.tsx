@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
+import { api } from "@/lib/http";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -24,18 +25,7 @@ export default function LoginPage() {
     const password = formData.get("password") as string;
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || "Login failed");
-      }
-
-      const data = await res.json();
+      const data = await api.post<any>("/auth/login", { email, password });
       // TODO: Securely store the JWT (e.g., in HttpOnly cookie)
       localStorage.setItem("access_token", data.access_token); // For demonstration, use localStorage
 

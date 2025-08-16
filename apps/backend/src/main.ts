@@ -2,18 +2,47 @@ import { NestFactory, HttpAdapterHost } from '@nestjs/core'; // Import HttpAdapt
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter'; // Import AllExceptionsFilter
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor'; // Import LoggingInterceptor
+import { ValidationPipe } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  // CORS: allow configured origins; default permissive in dev
+  const rawOrigins = process.env.CORS_ORIGINS || '';
+  const origins = rawOrigins
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
   app.enableCors({
-    origin: true, // Allow all origins in development
+    origin: origins.length > 0 ? origins : true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
-  }); // Enable CORS
+  });
 
   const { httpAdapter } = app.get(HttpAdapterHost); // Get HttpAdapterHost
   app.useGlobalFilters(new AllExceptionsFilter(httpAdapter)); // Apply global filter
   app.useGlobalInterceptors(new LoggingInterceptor()); // Apply global interceptor
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+      transformOptions: { enableImplicitConversion: true },
+    }),
+  );
+
+  // OpenAPI (Swagger) - enable in non-production by default
+  const enableSwagger = (process.env.SWAGGER_ENABLED || '').toLowerCase() === 'true' || process.env.NODE_ENV !== 'production';
+  if (enableSwagger) {
+    const config = new DocumentBuilder()
+      .setTitle('Global Classifieds API')
+      .setDescription('API documentation for the Global Classifieds Marketplace')
+      .setVersion('1.0.0')
+      .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' })
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('/docs', app, document, { swaggerOptions: { persistAuthorization: true } });
+  }
 
   const port = process.env.PORT || 5000;
   await app.listen(port);

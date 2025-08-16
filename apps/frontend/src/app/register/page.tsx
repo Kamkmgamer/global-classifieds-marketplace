@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
+import { api } from "@/lib/http";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -24,16 +25,7 @@ export default function RegisterPage() {
     const password = formData.get("password") as string;
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || "Registration failed");
-      }
+      await api.post("/auth/register", { email, password });
 
       toast({
         title: "Registration Successful!",

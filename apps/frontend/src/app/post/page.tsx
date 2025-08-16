@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast"; // Import useToast
 import { useAuth } from "@/hooks/use-auth"; // Import useAuth
+import { api } from "@/lib/http";
 
 export default function PostPage() {
   const router = useRouter();
@@ -39,18 +40,7 @@ export default function PostPage() {
         throw new Error("Authentication token not found.");
       }
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/listings`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        const j = await res.json().catch(() => ({}));
-        throw new Error(j?.error || "Failed to create listing");
-      }
+      await api.post("/listings", payload, { headers: { Authorization: `Bearer ${token}` } });
       toast({ // Show success toast
         title: "Listing created!",
         description: "Your listing has been successfully posted.",
