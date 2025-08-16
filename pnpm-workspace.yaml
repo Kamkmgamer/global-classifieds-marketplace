@@ -3,6 +3,9 @@ packages:
   - packages/*
   - apps/backend
 
+ignoredBuiltDependencies:
+  - bcrypt
+
 onlyBuiltDependencies:
   - '@nestjs/core'
   - sharp

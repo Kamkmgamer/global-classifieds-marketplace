@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Query, UsePipes, ValidationPipe, UseGuards } from '@nestjs/common'; // Added UseGuards
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Query,
+  UsePipes,
+  ValidationPipe,
+  UseGuards,
+} from '@nestjs/common'; // Added UseGuards
 import { ListingsService } from './listings.service';
 import { CreateListingDto } from './dto/create-listing.dto'; // Import CreateListingDto
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'; // Import JwtAuthGuard
@@ -13,7 +22,8 @@ export class ListingsController {
   @UseGuards(JwtAuthGuard, RolesGuard) // Apply JwtAuthGuard and RolesGuard
   @Roles('admin') // Only admin can create listings (for demonstration)
   @UsePipes(new ValidationPipe({ transform: true })) // Apply ValidationPipe
-  create(@Body() createListingDto: CreateListingDto) { // Use CreateListingDto
+  create(@Body() createListingDto: CreateListingDto) {
+    // Use CreateListingDto
     return this.listingsService.create(createListingDto);
   }
 
@@ -27,6 +37,14 @@ export class ListingsController {
     @Query('location') location: string,
     @Query('sort') sort: string,
   ) {
-    return this.listingsService.findAll({ limit, page, q, minPrice, maxPrice, location, sort });
+    return this.listingsService.findAll({
+      limit,
+      page,
+      q,
+      minPrice,
+      maxPrice,
+      location,
+      sort,
+    });
   }
 }

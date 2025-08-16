@@ -1,4 +1,13 @@
-import { IsString, IsNumber, IsOptional, IsUrl, Min, Max, MinLength, MaxLength } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsUrl,
+  Min,
+  Max,
+  MinLength,
+  MaxLength,
+} from 'class-validator';
 
 export class CreateListingDto {
   @IsString()

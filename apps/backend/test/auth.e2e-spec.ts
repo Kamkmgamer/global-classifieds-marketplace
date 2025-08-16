@@ -58,7 +58,11 @@ describe('Auth (e2e)', () => {
     // Register and login an admin user
     await request(app.getHttpServer())
       .post('/auth/register')
-      .send({ email: 'admin@example.com', password: 'adminpassword', role: 'admin' })
+      .send({
+        email: 'admin@example.com',
+        password: 'adminpassword',
+        role: 'admin',
+      })
       .expect(201);
 
     const loginRes = await request(app.getHttpServer())

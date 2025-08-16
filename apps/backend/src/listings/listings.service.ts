@@ -1,6 +1,13 @@
-import { Injectable, CacheKey, CacheTTL } from '@nestjs/common'; // Added CacheKey, CacheTTL
+import { Injectable } from '@nestjs/common';
+import { CacheKey, CacheTTL } from '@nestjs/cache-manager'; // Added CacheKey, CacheTTL
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like, Between, MoreThanOrEqual, LessThanOrEqual } from 'typeorm';
+import {
+  Repository,
+  Like,
+  Between,
+  MoreThanOrEqual,
+  LessThanOrEqual,
+} from 'typeorm';
 import { Listing } from './listing.entity';
 
 @Injectable()

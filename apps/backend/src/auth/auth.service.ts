@@ -14,7 +14,10 @@ export class AuthService {
 
   async register(registerDto: RegisterDto): Promise<any> {
     const hashedPassword = await bcrypt.hash(registerDto.password, 10);
-    const user = await this.usersService.create({ email: registerDto.email, password: hashedPassword });
+    const user = await this.usersService.create({
+      email: registerDto.email,
+      password: hashedPassword,
+    });
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...result } = user; // Exclude password from response
     return result;

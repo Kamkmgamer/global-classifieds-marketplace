@@ -1,4 +1,5 @@
-import { Module, CacheModule } from '@nestjs/common'; // Added CacheModule
+import { Module } from '@nestjs/common';
+import { CacheModule } from '@nestjs/cache-manager'; // Added CacheModule
 import { TypeOrmModule } from '@nestjs/typeorm'; // Import TypeOrmModule
 import { ConfigModule, ConfigService } from '@nestjs/config'; // Import ConfigModule and ConfigService
 import { AppController } from './app.controller';
@@ -30,7 +31,8 @@ import * as redisStore from 'cache-manager-redis-store'; // Import redisStore
       }),
       inject: [ConfigService],
     }),
-    CacheModule.registerAsync({ // Configure CacheModule with Redis
+    CacheModule.registerAsync({
+      // Configure CacheModule with Redis
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
         store: redisStore,
