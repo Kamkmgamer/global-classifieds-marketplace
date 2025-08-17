@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { CacheKey, CacheTTL } from '@nestjs/cache-manager'; // Added CacheKey, CacheTTL
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Inject } from '@nestjs/common';
+import type { Cache } from 'cache-manager';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   Repository,
@@ -15,6 +17,7 @@ export class ListingsService {
   constructor(
     @InjectRepository(Listing)
     private listingRepository: Repository<Listing>,
+    @Inject(CACHE_MANAGER) private cache: Cache,
   ) {}
 
   async create(listing: Partial<Listing>): Promise<Listing> {
@@ -22,8 +25,6 @@ export class ListingsService {
     return this.listingRepository.save(newListing);
   }
 
-  @CacheKey('listings_cache') // Define a base cache key
-  @CacheTTL(60) // Cache for 60 seconds
   async findAll(query: {
     limit?: string;
     page?: string;
@@ -36,6 +37,24 @@ export class ListingsService {
     const limit = Number.parseInt(query.limit || '12', 10);
     const page = Number.parseInt(query.page || '1', 10);
     const skip = (page - 1) * limit;
+
+    // Build a normalized cache key from query params
+    const normalized = {
+      limit,
+      page,
+      q: query.q || '',
+      minPrice: query.minPrice || '',
+      maxPrice: query.maxPrice || '',
+      location: query.location || '',
+      sort: query.sort || '',
+    } as const;
+    const cacheKey = `listings:${JSON.stringify(normalized)}`;
+
+    // Attempt cache read
+    const cached = await this.cache.get<{ listings: Listing[]; total: number }>(cacheKey);
+    if (cached) {
+      return cached;
+    }
 
     const where: any = {};
     let order: { [key: string]: 'ASC' | 'DESC' } = {};
@@ -76,6 +95,9 @@ export class ListingsService {
       take: limit,
     });
 
-    return { listings, total };
+    const result = { listings, total };
+    // Cache write with TTL ~60s
+    await this.cache.set(cacheKey, result, 60_000);
+    return result;
   }
 }

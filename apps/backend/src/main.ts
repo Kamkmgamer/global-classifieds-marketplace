@@ -4,6 +4,7 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter'; //
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor'; // Import LoggingInterceptor
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -22,6 +23,16 @@ async function bootstrap() {
   const { httpAdapter } = app.get(HttpAdapterHost); // Get HttpAdapterHost
   app.useGlobalFilters(new AllExceptionsFilter(httpAdapter)); // Apply global filter
   app.useGlobalInterceptors(new LoggingInterceptor()); // Apply global interceptor
+  // API Security Headers
+  app.use(
+    helmet({
+      crossOriginOpenerPolicy: { policy: 'same-origin' },
+      crossOriginResourcePolicy: { policy: 'same-origin' },
+      referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+      // Keep default contentSecurityPolicy disabled here; frontend handles CSP
+      contentSecurityPolicy: false,
+    }),
+  );
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

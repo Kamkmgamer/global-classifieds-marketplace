@@ -6,6 +6,8 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Toaster } from "@/components/ui/toaster"; // Import Toaster
 import { AuthProvider } from "@/hooks/use-auth"; // Import AuthProvider
+import { env } from "@/lib/env";
+import AxeDev from "@/components/dev/Axe";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,6 +20,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(env.NEXT_PUBLIC_SITE_URL),
   title: {
     default: "Global Classifieds Marketplace",
     template: "%s | Global Classifieds",
@@ -75,6 +78,8 @@ export default function RootLayout({
         >
           Skip to content
         </a>
+        {/* Development-only accessibility checks (no-op in production) */}
+        <AxeDev />
         <ThemeProvider>
           <AuthProvider> {/* Wrap with AuthProvider */}
             <div className="min-h-screen flex flex-col">

@@ -13,7 +13,8 @@ This project has been elevated to an enterprise-grade standard with the followin
 - **Database Integration:** Persistent data storage using PostgreSQL with TypeORM for efficient and type-safe database interactions.
 - **Authentication & Authorization:** Secure JWT-based authentication system with user registration, login, and role-based access control (RBAC) for protected endpoints.
 - **Centralized Error Handling:** Global exception filters for consistent and informative error responses.
-- **Comprehensive Logging:** Global logging interceptors for detailed request and response tracking.
+- **Security Headers:** Helmet middleware enables COOP/CORP, Referrer Policy and other best-practice headers by default (frontend enforces CSP).
+- **Privacy‑First Logging:** Global logging interceptor with sensitive‑data redaction. In production, logs omit full bodies/responses and keep concise request/response lines.
 - **Performance Optimization:** Integrated Redis caching for frequently accessed data (e.g., listings) to reduce database load and improve response times.
 - **Data Validation:** Strict input validation using DTOs and validation pipes for all API requests.
 
@@ -24,6 +25,7 @@ This project has been elevated to an enterprise-grade standard with the followin
 - **Enhanced User Feedback:** Implemented loading skeletons and clear empty states for a smoother user experience.
 - **Responsive Design:** Fully responsive and touch-friendly UI across all screen sizes.
 - **Authentication Integration:** Seamless integration with the backend authentication system, managing user sessions and protecting client-side routes.
+- **Dev‑Only Accessibility Audits:** `@axe-core/react` runs automatically in development to flag common a11y issues without impacting production builds.
 
 ---
 
@@ -135,7 +137,8 @@ pnpm --filter backend test:e2e
 
 Production deployments must not use `synchronize: true`. This project is configured to:
 
-- Disable TypeORM schema sync in production.
+- Disable TypeORM schema sync in production (hard off).
+- Default `synchronize` to off in non‑production; opt‑in by setting `TYPEORM_SYNCHRONIZE=true` locally when needed.
 - Use migrations for schema changes.
 
 Backend changes:
@@ -162,7 +165,7 @@ pnpm --filter backend run migration:revert
 
 Environment:
 
-- Local dev: `.env.development` includes `TYPEORM_SYNCHRONIZE=true` to ease local iteration.
+- Local dev: you may set `TYPEORM_SYNCHRONIZE=true` to ease local iteration (not recommended for shared environments).
 - Staging/Prod: ensure `TYPEORM_SYNCHRONIZE=false` and run migrations during deployment.
 
 CI/CD Guidance:

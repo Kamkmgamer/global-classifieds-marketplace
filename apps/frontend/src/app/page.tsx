@@ -9,15 +9,30 @@ import { ListingsResponseSchema } from '@/lib/schemas';
 
 // Function to fetch listings through the robust API client
 async function fetchListings(limit: number = 6) {
+  const mock = () =>
+    Array.from({ length: limit }).map((_, i) => ({
+      id: `mock-${i + 1}`,
+      title: `Sample item ${i + 1}`,
+      price: (i + 1) * 10,
+      image: `/placeholder-${(i % 3) + 1}.svg`,
+      location: 'Local',
+    }));
+
+  // If no backend is configured (e.g., local dev without API), return mock data
+  if (!env.NEXT_PUBLIC_BACKEND_URL) {
+    return mock();
+  }
+
   try {
-    const data = await api.get<typeof ListingsResponseSchema, { listings: Array<{ id: string; title: string; price: number; image: string; location?: string }> }>(
-      `/listings?limit=${limit}`,
-      { cache: 'no-store', schema: ListingsResponseSchema, retries: 2, timeoutMs: 8000 }
-    );
+    const data = await api.get<
+      typeof ListingsResponseSchema,
+      { listings: Array<{ id: string; title: string; price: number; image: string; location?: string }> }
+    >(`/listings?limit=${limit}`, { cache: 'no-store', schema: ListingsResponseSchema, retries: 2, timeoutMs: 8000 });
     return data.listings;
   } catch (err) {
-    console.error('Failed to fetch listings:', err);
-    return [];
+    // Avoid noisy errors in dev when backend is down; surface as a warning and show mock data
+    console.warn('Listings unavailable, using mock data:', err);
+    return mock();
   }
 }
 

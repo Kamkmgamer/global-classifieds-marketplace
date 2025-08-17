@@ -39,6 +39,10 @@ function buildCsp() {
     connectSrc,
     "frame-ancestors 'self'",
     "form-action 'self'",
+    "base-uri 'self'",
+    "object-src 'none'",
+    // In production, upgrade any http subresources to https
+    ...(isDev ? [] : ["upgrade-insecure-requests"]),
     // Opt-in to powerful isolation without breaking 3rd parties (avoid COEP here)
     // COOP/CORP sent as separate headers below
   ].join("; ");
