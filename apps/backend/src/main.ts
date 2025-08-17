@@ -5,6 +5,7 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor'; 
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
+import { requestIdMiddleware } from './common/middleware/request-id.middleware';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -24,6 +25,7 @@ async function bootstrap() {
   app.useGlobalFilters(new AllExceptionsFilter(httpAdapter)); // Apply global filter
   app.useGlobalInterceptors(new LoggingInterceptor()); // Apply global interceptor
   // API Security Headers
+  app.use(requestIdMiddleware);
   app.use(
     helmet({
       crossOriginOpenerPolicy: { policy: 'same-origin' },

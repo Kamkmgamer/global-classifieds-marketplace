@@ -45,15 +45,16 @@ export class LoggingInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const req = context.switchToHttp().getRequest();
     const { method, url, body, query } = req;
+    const requestId: string | undefined = (req as any).requestId || req.headers['x-request-id'];
     const now = Date.now();
     const isProd = process.env.NODE_ENV === 'production';
     if (isProd) {
       this.logger.log(
-        `Incoming Request - ${method} ${url}`,
+        `[${requestId || 'no-id'}] Incoming Request - ${method} ${url}`,
       );
     } else {
       this.logger.log(
-        `Incoming Request - Method: ${method}, URL: ${url}, Body: ${JSON.stringify(this.redact(body))}, Query: ${JSON.stringify(this.redact(query))}`,
+        `[${requestId || 'no-id'}] Incoming Request - Method: ${method}, URL: ${url}, Body: ${JSON.stringify(this.redact(body))}, Query: ${JSON.stringify(this.redact(query))}`,
       );
     }
 
@@ -63,18 +64,18 @@ export class LoggingInterceptor implements NestInterceptor {
           const status = context.switchToHttp().getResponse().statusCode;
           if (isProd) {
             this.logger.log(
-              `Outgoing Response - ${method} ${url} - ${status} - ${Date.now() - now}ms`,
+              `[${requestId || 'no-id'}] Outgoing Response - ${method} ${url} - ${status} - ${Date.now() - now}ms`,
             );
           } else {
             this.logger.log(
-              `Outgoing Response - Method: ${method}, URL: ${url}, Status: ${status}, Duration: ${Date.now() - now}ms, Response: ${JSON.stringify(this.redact(data))}`,
+              `[${requestId || 'no-id'}] Outgoing Response - Method: ${method}, URL: ${url}, Status: ${status}, Duration: ${Date.now() - now}ms, Response: ${JSON.stringify(this.redact(data))}`,
             );
           }
         },
         (err) => {
           const status = err?.status || 'N/A';
           this.logger.error(
-            `Error Response - ${method} ${url} - ${status} - ${Date.now() - now}ms`,
+            `[${requestId || 'no-id'}] Error Response - ${method} ${url} - ${status} - ${Date.now() - now}ms`,
           );
         },
       ),

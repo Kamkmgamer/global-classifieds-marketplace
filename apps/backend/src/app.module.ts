@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { CacheModule } from '@nestjs/cache-manager'; // Added CacheModule
 import { TypeOrmModule } from '@nestjs/typeorm'; // Import TypeOrmModule
 import { ConfigModule, ConfigService } from '@nestjs/config'; // Import ConfigModule and ConfigService
@@ -10,11 +11,38 @@ import { UsersModule } from './users/users.module'; // Import UsersModule
 import { User } from './users/user.entity'; // Import User entity
 import { AuthModule } from './auth/auth.module'; // Import AuthModule
 import * as redisStore from 'cache-manager-redis-store'; // Import redisStore
+import { RateLimitGuard } from './common/guards/rate-limit.guard';
+import { HealthController } from './health.controller.js';
+import * as Joi from 'joi';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true, // Makes ConfigModule available globally
+      validationSchema: Joi.object({
+        NODE_ENV: Joi.string().valid('development', 'test', 'staging', 'production').default('development'),
+        PORT: Joi.number().port().default(5000),
+        // Database
+        DATABASE_HOST: Joi.string().default('db'),
+        DATABASE_PORT: Joi.number().port().default(5432),
+        POSTGRES_USER: Joi.string().default('user'),
+        POSTGRES_PASSWORD: Joi.string().default('password'),
+        POSTGRES_DB: Joi.string().default('classifieds_db'),
+        // Redis
+        REDIS_HOST: Joi.string().default('redis'),
+        REDIS_PORT: Joi.number().port().default(6379),
+        // TypeORM
+        TYPEORM_SYNCHRONIZE: Joi.string().valid('true', 'false').default('false'),
+        // Swagger
+        SWAGGER_ENABLED: Joi.string().valid('true', 'false').optional(),
+        // CORS
+        CORS_ORIGINS: Joi.string().allow('').optional(),
+        // Auth
+        JWT_SECRET: Joi.string().min(16).optional(),
+        // Rate Limit
+        RATE_LIMIT_MAX: Joi.number().min(1).optional(),
+        RATE_LIMIT_WINDOW_MS: Joi.number().min(1000).optional(),
+      }),
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -51,7 +79,13 @@ import * as redisStore from 'cache-manager-redis-store'; // Import redisStore
     UsersModule, // Add UsersModule
     AuthModule, // Add AuthModule
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [AppController, HealthController],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: RateLimitGuard,
+    },
+  ],
 })
 export class AppModule {}
