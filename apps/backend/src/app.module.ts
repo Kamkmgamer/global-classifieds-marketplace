@@ -12,7 +12,7 @@ import { User } from './users/user.entity'; // Import User entity
 import { AuthModule } from './auth/auth.module'; // Import AuthModule
 import * as redisStore from 'cache-manager-redis-store'; // Import redisStore
 import { RateLimitGuard } from './common/guards/rate-limit.guard';
-import { HealthController } from './health.controller.js';
+import { HealthController } from './health.controller';
 import * as Joi from 'joi';
 
 @Module({
@@ -89,3 +89,4 @@ import * as Joi from 'joi';
   ],
 })
 export class AppModule {}
+
