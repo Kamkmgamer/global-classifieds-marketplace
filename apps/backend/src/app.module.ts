@@ -50,8 +50,8 @@ import * as Joi from 'joi';
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
-        host: configService.get<string>('DATABASE_HOST', 'db'), // Default to 'db' for Docker Compose
-        port: configService.get<number>('DATABASE_PORT', 5432), // Default to 5432
+        host: configService.get<string>('DATABASE_HOST', 'db'),
+        port: configService.get<number>('DATABASE_PORT', 5432),
         username: configService.get<string>('POSTGRES_USER', 'user'),
         password: configService.get<string>('POSTGRES_PASSWORD', 'password'),
         database: configService.get<string>('POSTGRES_DB', 'classifieds_db'),
@@ -70,7 +70,7 @@ import * as Joi from 'joi';
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
         store: redisStore,
-        host: configService.get<string>('REDIS_HOST', 'redis'), // Default to 'redis' for Docker Compose
+        host: configService.get<string>('REDIS_HOST', 'redis'),
         port: configService.get<number>('REDIS_PORT', 6379),
         ttl: 300, // seconds
       }),
