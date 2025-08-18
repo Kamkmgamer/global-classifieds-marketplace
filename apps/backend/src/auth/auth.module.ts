@@ -14,10 +14,17 @@ import { LocalStrategy } from './local.strategy'; // Import LocalStrategy
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET', 'supersecret'), // Use a strong secret from env
-        signOptions: { expiresIn: '60m' },
-      }),
+      useFactory: async (configService: ConfigService) => {
+        const nodeEnv = configService.get<string>('NODE_ENV', 'development');
+        const secret = configService.get<string>('JWT_SECRET');
+        if (!secret && nodeEnv !== 'test') {
+          throw new Error('JWT_SECRET must be set and be at least 16 characters in non-test environments');
+        }
+        return {
+          secret: secret || 'test-secret-fallback',
+          signOptions: { expiresIn: '60m' },
+        };
+      },
       inject: [ConfigService],
     }),
     ConfigModule,

@@ -38,7 +38,9 @@ import * as Joi from 'joi';
         // CORS
         CORS_ORIGINS: Joi.string().allow('').optional(),
         // Auth
-        JWT_SECRET: Joi.string().min(16).optional(),
+        JWT_SECRET: Joi.string()
+          .min(16)
+          .when('NODE_ENV', { is: 'test', then: Joi.optional(), otherwise: Joi.required() }),
         // Rate Limit
         RATE_LIMIT_MAX: Joi.number().min(1).optional(),
         RATE_LIMIT_WINDOW_MS: Joi.number().min(1000).optional(),
