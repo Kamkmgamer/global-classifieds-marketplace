@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { env } from '@/lib/env';
 import Script from 'next/script';
+import { headers } from 'next/headers';
 import { Button } from '@/components/ui/button';
 import ListingCard from '@/components/ListingCard';
 import { api } from '@/lib/http';
@@ -66,10 +67,12 @@ const testimonials = [
 export default async function Home() {
   const backendUrl = env.NEXT_PUBLIC_BACKEND_URL;
   const featuredListings = await fetchListings(6); // Fetch 6 featured listings
+  const hdrs = await headers();
+  const nonce = hdrs.get('x-nonce') || undefined;
 
   return (
     <div className="min-h-screen">
-      <Script id="ld-org" type="application/ld+json" strategy="afterInteractive">
+      <Script id="ld-org" type="application/ld+json" strategy="afterInteractive" nonce={nonce}>
         {JSON.stringify({
           '@context': 'https://schema.org',
           '@type': 'Organization',
@@ -78,7 +81,7 @@ export default async function Home() {
           logo: '/favicon.ico',
         })}
       </Script>
-      <Script id="ld-website" type="application/ld+json" strategy="afterInteractive">
+      <Script id="ld-website" type="application/ld+json" strategy="afterInteractive" nonce={nonce}>
         {JSON.stringify({
           '@context': 'https://schema.org',
           '@type': 'WebSite',

@@ -14,7 +14,7 @@ function buildCsp() {
   // In dev, allow unsafe-eval for React Refresh; in prod, remove it.
   const scriptSrc = isDev
     ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
-    : "script-src 'self' 'unsafe-inline'";
+    : "script-src 'self'";
 
   // Allow connecting to configured backend origin (if present)
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
@@ -67,7 +67,6 @@ const nextConfig: NextConfig = {
         source: "/(.*)",
         headers: [
           ...securityHeaders,
-          { key: "Content-Security-Policy", value: buildCsp() },
           { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
           { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
           { key: "Origin-Agent-Cluster", value: "?1" },
