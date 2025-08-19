@@ -7,11 +7,16 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 export class RateLimitGuard implements CanActivate {
   private readonly windowMs: number;
   private readonly max: number;
+  private readonly authWindowMs: number;
+  private readonly authMax: number;
 
   constructor(@Inject(CACHE_MANAGER) private cache: Cache) {
-    // Default: 120 reqs/min. Configure via env RATE_LIMIT_MAX and RATE_LIMIT_WINDOW_MS.
+    // Global defaults: 120 reqs/min. Configure via env RATE_LIMIT_MAX and RATE_LIMIT_WINDOW_MS.
     this.windowMs = Number(process.env.RATE_LIMIT_WINDOW_MS || 60_000);
     this.max = Number(process.env.RATE_LIMIT_MAX || 120);
+    // Auth-specific stricter defaults: 10 reqs/min. Override via RATE_LIMIT_AUTH_MAX and RATE_LIMIT_AUTH_WINDOW_MS.
+    this.authWindowMs = Number(process.env.RATE_LIMIT_AUTH_WINDOW_MS || 60_000);
+    this.authMax = Number(process.env.RATE_LIMIT_AUTH_MAX || 10);
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -30,14 +35,19 @@ export class RateLimitGuard implements CanActivate {
       req.socket?.remoteAddress ||
       '127.0.0.1';
 
-    const bucket = Math.floor(Date.now() / this.windowMs); // fixed window
-    const key = `rl:${ip}:${bucket}`;
+    // Determine route-specific limits
+    const isAuthRoute = path.startsWith('/auth/login') || path.startsWith('/auth/register');
+    const limitWindowMs = isAuthRoute ? this.authWindowMs : this.windowMs;
+    const limitMax = isAuthRoute ? this.authMax : this.max;
+
+    const bucket = Math.floor(Date.now() / limitWindowMs); // fixed window per route bucket
+    const key = `rl:${isAuthRoute ? 'auth' : 'global'}:${ip}:${bucket}`;
 
     // cache-manager API can vary by store; we use get/set with TTL in seconds
     const current = (await this.cache.get<number>(key)) || 0;
 
-    if (current >= this.max) {
-      const resetAt = (bucket + 1) * this.windowMs;
+    if (current >= limitMax) {
+      const resetAt = (bucket + 1) * limitWindowMs;
       res.setHeader('Retry-After', Math.max(1, Math.ceil((resetAt - Date.now()) / 1000)).toString());
       res.setHeader('X-RateLimit-Remaining', '0');
       res.setHeader('X-RateLimit-Reset', resetAt.toString());
@@ -45,11 +55,11 @@ export class RateLimitGuard implements CanActivate {
     }
 
     const nextVal = current + 1;
-    const ttlSeconds = Math.ceil((this.windowMs - (Date.now() % this.windowMs)) / 1000);
+    const ttlSeconds = Math.ceil((limitWindowMs - (Date.now() % limitWindowMs)) / 1000);
     await this.cache.set(key, nextVal, ttlSeconds);
 
-    const resetAt = (bucket + 1) * this.windowMs;
-    res.setHeader('X-RateLimit-Remaining', Math.max(0, this.max - nextVal).toString());
+    const resetAt = (bucket + 1) * limitWindowMs;
+    res.setHeader('X-RateLimit-Remaining', Math.max(0, limitMax - nextVal).toString());
     res.setHeader('X-RateLimit-Reset', resetAt.toString());
 
     return true;
