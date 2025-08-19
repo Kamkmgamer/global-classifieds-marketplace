@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import SearchBar from '../SearchBar';
@@ -19,7 +20,8 @@ describe('SearchBar', () => {
 
     const form = container.querySelector('form');
     expect(form).toBeTruthy();
-    await user.submit(form!);
+    const submitBtn = screen.getByRole('button', { name: /search/i });
+    await user.click(submitBtn);
 
     // Ensure our mocked router was called
     // Since we cannot access the mocked instance from inside component easily,

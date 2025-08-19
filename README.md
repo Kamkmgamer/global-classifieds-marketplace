@@ -174,6 +174,52 @@ CI/CD Guidance:
 
 ---
 
+## Run Locally with Staging Compose
+
+Use `docker-compose.staging.yml` to simulate the staging stack locally (Postgres, Redis, backend in prod mode, frontend in prod mode).
+
+1) Set environment variables (example values for local):
+
+```bash
+# Frontend public URLs
+export NEXT_PUBLIC_BACKEND_URL=http://localhost:5000
+export NEXT_PUBLIC_SITE_URL=http://localhost:3000
+
+# Backend secrets and connections
+export DATABASE_URL=postgresql://user:password@localhost:5432/classifieds_db
+export REDIS_URL=redis://localhost:6379
+export JWT_SECRET=change_me_locally
+```
+
+2) Start the stack:
+
+```bash
+docker compose -f docker-compose.staging.yml up --build
+```
+
+Notes:
+- By default, Compose will build images locally if `FRONTEND_IMAGE`/`BACKEND_IMAGE` are not provided.
+- To use prebuilt images (e.g., from CI), export:
+  ```bash
+  export FRONTEND_IMAGE=ghcr.io/<owner>/<repo>/frontend:<tag>
+  export BACKEND_IMAGE=ghcr.io/<owner>/<repo>/backend:<tag>
+  ```
+
+3) Run migrations (optional, recommended on first run):
+
+Run from your host machine with the same `DATABASE_URL` pointing to the Compose Postgres:
+
+```bash
+DATABASE_URL=postgresql://user:password@localhost:5432/classifieds_db \
+  pnpm --filter backend run migration:run
+```
+
+4) Access:
+- Frontend: http://localhost:3000
+- Backend health: http://localhost:5000/health
+
+---
+
 ## Project Structure
 
 - `apps/backend/` — NestJS backend application
@@ -260,6 +306,33 @@ pnpm --filter backend run migration:run
 ```
 
 Ensure `TYPEORM_SYNCHRONIZE=false` in production to avoid schema drift.
+
+### 3.5) Rollback
+
+If a deployment introduces a critical regression, roll back quickly and safely:
+
+- Version your images: push immutable tags (e.g., `frontend:v1.2.3`, `backend:v1.2.3`). Keep the last known-good tag available.
+- Switch images to a known-good tag and redeploy:
+  ```bash
+  # Example if using environment overrides
+  export FRONTEND_IMAGE=ghcr.io/<owner>/<repo>/frontend:<good_tag>
+  export BACKEND_IMAGE=ghcr.io/<owner>/<repo>/backend:<good_tag>
+  docker compose up -d
+  ```
+- If the issue is schema-related, revert the last migration (only if safe and designed to be down-migratable):
+  ```bash
+  pnpm --filter backend run migration:revert
+  ```
+  Notes:
+  - Prefer forward-fix migrations when possible.
+  - Ensure application version is compatible with the schema you revert to.
+
+- Verify health:
+  - Backend: `/health` returns 200
+  - App smoke: can login, list/browse
+
+- Backups & PITR:
+  - Maintain periodic DB backups and point‑in‑time recovery for catastrophic cases where down migrations are unsafe.
 
 ### 4) Next.js Production Build
 

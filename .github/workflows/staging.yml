@@ -80,6 +80,31 @@ jobs:
           echo "FRONTEND_IMAGE=ghcr.io/${{ github.repository }}/frontend:${{ github.sha }}" >> $GITHUB_OUTPUT
           echo "BACKEND_IMAGE=ghcr.io/${{ github.repository }}/backend:${{ github.sha }}" >> $GITHUB_OUTPUT
 
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies (backend only)
+        run: pnpm install --frozen-lockfile
+
+      - name: Run DB migrations (staging)
+        env:
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+          NODE_ENV: production
+          TYPEORM_SYNCHRONIZE: 'false'
+        run: |
+          pnpm --filter backend run migration:run
+
       - name: SSH Deploy
         uses: appleboy/ssh-action@v1
         with:
