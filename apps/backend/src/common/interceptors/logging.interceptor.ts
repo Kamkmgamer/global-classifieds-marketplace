@@ -15,12 +15,13 @@ export class LoggingInterceptor implements NestInterceptor {
   private redact(obj: unknown): unknown {
     try {
       if (!obj || typeof obj !== 'object') return obj;
+      // All keys are lowercase to match against k.toLowerCase()
       const SENSITIVE_KEYS = [
         'password',
-        'confirmPassword',
+        'confirmpassword',
         'token',
-        'accessToken',
-        'refreshToken',
+        'accesstoken',
+        'refreshtoken',
         'authorization',
         'cookie',
         'cookies',

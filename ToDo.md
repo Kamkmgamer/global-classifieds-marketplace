@@ -87,8 +87,9 @@ Security & Auth
   - Owner: KAMKM
 
 Observability
-- [ ] (P2) Structured logging with redaction + request IDs
-  - Centralize logger; verify redaction; correlation IDs end-to-end
+- [x] (P2) Structured logging with redaction + request IDs
+  - Implemented: `request-id` middleware + interceptor redaction (prod/dev modes)
+  - Files: `apps/backend/src/common/middleware/request-id.middleware.ts`, `apps/backend/src/common/interceptors/logging.interceptor.ts`, `apps/backend/src/main.ts`
   - Owner: KAMKM
 
 - [ ] (P2) Metrics & tracing (OpenTelemetry/Prometheus)
