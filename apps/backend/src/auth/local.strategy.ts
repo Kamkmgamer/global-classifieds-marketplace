@@ -1,6 +1,6 @@
 import { Strategy } from 'passport-local';
 import { PassportStrategy } from '@nestjs/passport';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, HttpException, HttpStatus } from '@nestjs/common';
 import { AuthService } from './auth.service';
 
 @Injectable()
@@ -9,14 +9,23 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     super({
       usernameField: 'email',
       passwordField: 'password',
+      passReqToCallback: true,
     });
   }
 
-  async validate(email: string, password: string): Promise<any> {
+  async validate(req: any, email: string, password: string): Promise<any> {
+    // Check if account is locked
+    if (await this.authService.isLocked(email)) {
+      throw new HttpException('Too Many Requests: account temporarily locked', HttpStatus.TOO_MANY_REQUESTS);
+    }
+
     const user = await this.authService.validateUser(email, password);
     if (!user) {
+      await this.authService.onFailedLogin(email);
       throw new UnauthorizedException();
     }
+
+    await this.authService.onSuccessfulLogin(email);
     return user;
   }
 }

@@ -46,6 +46,10 @@ import * as Joi from 'joi';
         // Rate Limit
         RATE_LIMIT_MAX: Joi.number().min(1).optional(),
         RATE_LIMIT_WINDOW_MS: Joi.number().min(1000).optional(),
+        // Auth lockout/backoff
+        LOCKOUT_THRESHOLD: Joi.number().min(1).optional(),
+        LOCKOUT_TTL_MS: Joi.number().min(1000).optional(),
+        LOCKOUT_FAIL_WINDOW_MS: Joi.number().min(1000).optional(),
       }),
     }),
     TypeOrmModule.forRootAsync({

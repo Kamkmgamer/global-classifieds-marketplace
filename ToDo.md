@@ -77,7 +77,9 @@ Docs
 ## P2  Mid Term (26 weeks)
 
 Security & Auth
-- [ ] (P2) Account lockout/backoff on failed login attempts
+- [x] (P2) Account lockout/backoff on failed login attempts
+  - Files: `apps/backend/src/auth/auth.service.ts`, `apps/backend/src/auth/local.strategy.ts`, `apps/backend/src/app.module.ts`
+  - Env: `LOCKOUT_THRESHOLD` (default 5), `LOCKOUT_TTL_MS` (default 900000), `LOCKOUT_FAIL_WINDOW_MS` (default 600000)
   - Owner: KAMKM
 
 - [ ] (P2) Secrets management in production

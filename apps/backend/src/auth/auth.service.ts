@@ -1,16 +1,76 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, Inject } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { Cache } from '@nestjs/cache-manager';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 
 @Injectable()
 export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
+    @Inject(CACHE_MANAGER) private cache: Cache,
   ) {}
+
+  // --- Account lockout/backoff helpers ---
+  private failKey(email: string) {
+    return `auth:fail:${email.toLowerCase()}`;
+  }
+  private lockKey(email: string) {
+    return `auth:lock:${email.toLowerCase()}`;
+  }
+
+  private getThreshold() {
+    return Number(process.env.LOCKOUT_THRESHOLD || 5);
+  }
+  private getLockTtlMs() {
+    return Number(process.env.LOCKOUT_TTL_MS || 15 * 60_000); // 15 minutes
+  }
+  private getFailWindowMs() {
+    return Number(process.env.LOCKOUT_FAIL_WINDOW_MS || 10 * 60_000); // 10 minutes
+  }
+
+  async isLocked(email: string): Promise<boolean> {
+    const key = this.lockKey(email);
+    const val = await this.cache.get<any>(key);
+    return Boolean(val);
+  }
+
+  async onFailedLogin(email: string): Promise<void> {
+    const fKey = this.failKey(email);
+    const lKey = this.lockKey(email);
+    const current = (await this.cache.get<number>(fKey)) || 0;
+    const next = current + 1;
+    const threshold = this.getThreshold();
+    if (next >= threshold) {
+      // Lock account
+      await this.cache.set(lKey, true, Math.ceil(this.getLockTtlMs() / 1000));
+      // Reset fail counter
+      await this.cache.set(fKey, 0, Math.ceil(this.getFailWindowMs() / 1000));
+    } else {
+      // Increment within rolling window
+      const ttlSeconds = Math.ceil(this.getFailWindowMs() / 1000);
+      await this.cache.set(fKey, next, ttlSeconds);
+    }
+  }
+
+  async onSuccessfulLogin(email: string): Promise<void> {
+    const fKey = this.failKey(email);
+    try {
+      // Clear failure counter on success
+      // cache.del may not be implemented by all stores; fallback to set 0 with short TTL
+      if (typeof (this.cache as any).del === 'function') {
+        await (this.cache as any).del(fKey);
+      } else {
+        await this.cache.set(fKey, 0, 60);
+      }
+    } catch {
+      // noop
+    }
+  }
 
   async register(registerDto: RegisterDto): Promise<any> {
     // Pre-check to provide a clear 409 without relying solely on DB constraint
