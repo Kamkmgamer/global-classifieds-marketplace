@@ -23,12 +23,14 @@ import * as Joi from 'joi';
         NODE_ENV: Joi.string().valid('development', 'test', 'staging', 'production').default('development'),
         PORT: Joi.number().port().default(5000),
         // Database
+        DATABASE_URL: Joi.string().uri().optional(),
         DATABASE_HOST: Joi.string().default('db'),
         DATABASE_PORT: Joi.number().port().default(5432),
         POSTGRES_USER: Joi.string().default('user'),
         POSTGRES_PASSWORD: Joi.string().default('password'),
         POSTGRES_DB: Joi.string().default('classifieds_db'),
         // Redis
+        REDIS_URL: Joi.string().uri().optional(),
         REDIS_HOST: Joi.string().default('redis'),
         REDIS_PORT: Joi.number().port().default(6379),
         // TypeORM
@@ -50,11 +52,29 @@ import * as Joi from 'joi';
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
-        host: configService.get<string>('DATABASE_HOST', 'db'),
-        port: configService.get<number>('DATABASE_PORT', 5432),
-        username: configService.get<string>('POSTGRES_USER', 'user'),
-        password: configService.get<string>('POSTGRES_PASSWORD', 'password'),
-        database: configService.get<string>('POSTGRES_DB', 'classifieds_db'),
+        ...(function () {
+          const url = configService.get<string>('DATABASE_URL');
+          if (url) {
+            const u = new URL(url);
+            const username = u.username ? decodeURIComponent(u.username) : configService.get<string>('POSTGRES_USER', 'user');
+            const password = u.password ? decodeURIComponent(u.password) : configService.get<string>('POSTGRES_PASSWORD', 'password');
+            const database = decodeURIComponent(u.pathname.replace(/^\//, '')) || configService.get<string>('POSTGRES_DB', 'classifieds_db');
+            return {
+              host: u.hostname,
+              port: Number(u.port || 5432),
+              username,
+              password,
+              database,
+            };
+          }
+          return {
+            host: configService.get<string>('DATABASE_HOST', 'db'),
+            port: configService.get<number>('DATABASE_PORT', 5432),
+            username: configService.get<string>('POSTGRES_USER', 'user'),
+            password: configService.get<string>('POSTGRES_PASSWORD', 'password'),
+            database: configService.get<string>('POSTGRES_DB', 'classifieds_db'),
+          };
+        })(),
         entities: [Listing, User], // Add User entity
         // IMPORTANT: Never use synchronize in production. Enable only in development via env.
         // Defaults: false everywhere; in non-production you MUST explicitly set TYPEORM_SYNCHRONIZE=true to enable.
@@ -70,8 +90,20 @@ import * as Joi from 'joi';
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
         store: redisStore,
-        host: configService.get<string>('REDIS_HOST', 'redis'),
-        port: configService.get<number>('REDIS_PORT', 6379),
+        ...(function () {
+          const url = configService.get<string>('REDIS_URL');
+          if (url) {
+            const u = new URL(url);
+            return {
+              host: u.hostname,
+              port: Number(u.port || 6379),
+            };
+          }
+          return {
+            host: configService.get<string>('REDIS_HOST', 'redis'),
+            port: configService.get<number>('REDIS_PORT', 6379),
+          };
+        })(),
         ttl: 300, // seconds
       }),
       inject: [ConfigService],
