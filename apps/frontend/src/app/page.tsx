@@ -2,7 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { env } from '@/lib/env';
 import Script from 'next/script';
-import { headers } from 'next/headers';
+import { headers, cookies } from 'next/headers';
 import { Button } from '@/components/ui/button';
 import ListingCard from '@/components/ListingCard';
 import { api } from '@/lib/http';
@@ -68,7 +68,8 @@ export default async function Home() {
   const backendUrl = env.NEXT_PUBLIC_BACKEND_URL;
   const featuredListings = await fetchListings(6); // Fetch 6 featured listings
   const hdrs = await headers();
-  const nonce = hdrs.get('x-nonce') || undefined;
+  const cookieStore = await cookies();
+  const nonce = hdrs.get('x-nonce') || cookieStore.get('nonce')?.value || undefined;
 
   return (
     <div className="min-h-screen">

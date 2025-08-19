@@ -56,6 +56,14 @@ export function middleware(req: NextRequest) {
   requestHeaders.set("x-nonce", nonce);
   const res = NextResponse.next({ request: { headers: requestHeaders } });
   res.headers.set("Content-Security-Policy", cspValue);
+  // Also expose nonce via a short-lived cookie for server components
+  res.cookies.set("nonce", nonce, {
+    httpOnly: false, // readable by server component via cookies(); not a secret across requests
+    secure: !isDev,
+    sameSite: "lax",
+    path: "/",
+    maxAge: 5, // seconds; per-request only
+  });
 
   // Apply API rate limiting only for API paths
   if (path.startsWith("/api/")) {
