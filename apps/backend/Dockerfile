@@ -7,14 +7,15 @@ WORKDIR /app
 RUN npm install -g pnpm
 
 # Copy workspace configuration
-COPY pnpm-workspace.yaml .
-COPY package.json .
+COPY pnpm-workspace.yaml ./
+COPY package.json ./
 
 # Copy backend's package.json
 COPY apps/backend/package.json ./apps/backend/
 
-# Install only production dependencies for the backend
-RUN pnpm install --prod --filter backend
+# Install all workspace deps (including dev) for building
+COPY pnpm-lock.yaml ./
+RUN pnpm install
 
 # Copy the rest of the source code
 COPY . .
@@ -31,12 +32,12 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 WORKDIR /app
 
 # Copy dependencies and built code from the builder stage
-COPY --from=builder /app/apps/backend/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/apps/backend/node_modules ./apps/backend/node_modules
+COPY --from=builder /app/node_modules /app/node_modules
+COPY --from=builder /app/apps/backend/node_modules /app/apps/backend/node_modules
+COPY --from=builder /app/apps/backend/dist /app/apps/backend/dist
 
 USER appuser
+ENV NODE_PATH=/app/node_modules:/app/apps/backend/node_modules
 
 EXPOSE 5000
-
-CMD ["node", "dist/main"]
+CMD ["node", "apps/backend/dist/src/main.js"]

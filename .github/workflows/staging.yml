@@ -1,0 +1,124 @@
+name: Staging Deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'apps/**'
+      - 'docker-compose.staging.yml'
+      - '.github/workflows/staging.yml'
+
+jobs:
+  build-and-push:
+    name: Build and Push Images
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Define image tags
+        id: vars
+        run: |
+          FRONTEND_IMAGE=ghcr.io/${{ github.repository }}/frontend:${{ github.sha }}
+          BACKEND_IMAGE=ghcr.io/${{ github.repository }}/backend:${{ github.sha }}
+          echo "FRONTEND_IMAGE=$FRONTEND_IMAGE" >> $GITHUB_OUTPUT
+          echo "BACKEND_IMAGE=$BACKEND_IMAGE" >> $GITHUB_OUTPUT
+
+      - name: Build frontend image
+        run: docker build -f apps/frontend/Dockerfile -t ${{ steps.vars.outputs.FRONTEND_IMAGE }} .
+
+      - name: Build backend image
+        run: docker build -f apps/backend/Dockerfile -t ${{ steps.vars.outputs.BACKEND_IMAGE }} .
+
+      - name: Push images
+        run: |
+          docker push ${{ steps.vars.outputs.FRONTEND_IMAGE }}
+          docker push ${{ steps.vars.outputs.BACKEND_IMAGE }}
+
+      - name: Export images for next job
+        uses: actions/upload-artifact@v4
+        with:
+          name: images
+          path: |
+            /tmp/f.txt
+        retention-days: 1
+        if: ${{ always() }}
+
+  deploy:
+    name: Deploy to Staging
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Determine image tags
+        id: vars
+        run: |
+          echo "FRONTEND_IMAGE=ghcr.io/${{ github.repository }}/frontend:${{ github.sha }}" >> $GITHUB_OUTPUT
+          echo "BACKEND_IMAGE=ghcr.io/${{ github.repository }}/backend:${{ github.sha }}" >> $GITHUB_OUTPUT
+
+      - name: SSH Deploy
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            # Ensure working directory exists and contains docker-compose.staging.yml
+            mkdir -p /srv/global-classifieds
+            cd /srv/global-classifieds
+
+            # Fetch latest compose file from the repo (optional if repo already cloned on server)
+            # curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/main/docker-compose.staging.yml -o docker-compose.staging.yml
+
+            # Login to GHCR (requires docker >= 20.10)
+            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin || true
+
+            # Export environment for compose
+            export FRONTEND_IMAGE='${{ steps.vars.outputs.FRONTEND_IMAGE }}'
+            export BACKEND_IMAGE='${{ steps.vars.outputs.BACKEND_IMAGE }}'
+            export NEXT_PUBLIC_BACKEND_URL='${{ secrets.STAGING_NEXT_PUBLIC_BACKEND_URL }}'
+            export NEXT_PUBLIC_SITE_URL='${{ secrets.STAGING_NEXT_PUBLIC_SITE_URL }}'
+            export DATABASE_URL='${{ secrets.STAGING_DATABASE_URL }}'
+            export REDIS_URL='${{ secrets.STAGING_REDIS_URL }}'
+            export JWT_SECRET='${{ secrets.STAGING_JWT_SECRET }}'
+
+            # Pull images and start/update services
+            docker compose -f docker-compose.staging.yml pull || true
+            docker compose -f docker-compose.staging.yml up -d
+
+            # NOTE: Running TypeORM migrations from the production image is not supported
+            # here because dev deps (ts-node) are not included. Options:
+            # 1) Run migrations from CI using Node + dev deps before deploy.
+            # 2) Build a dedicated migration image that includes dev deps.
+            # Example (option 1) using CI before deploy:
+            #   pnpm --filter backend run migration:run
+
+      - name: Post-deploy smoke check
+        run: |
+          curl -fsS ${{ secrets.STAGING_NEXT_PUBLIC_SITE_URL }}/ || exit 1
+          curl -fsS ${{ secrets.STAGING_NEXT_PUBLIC_BACKEND_URL }}/health || true

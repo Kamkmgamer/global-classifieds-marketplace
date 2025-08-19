@@ -1,0 +1,61 @@
+services:
+  frontend:
+    # In CI/CD we pass a prebuilt image via FRONTEND_IMAGE
+    image: ${FRONTEND_IMAGE:-}
+    # Fallback to building locally if no image provided
+    build:
+      context: .
+      dockerfile: ./apps/frontend/Dockerfile
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_BACKEND_URL: ${NEXT_PUBLIC_BACKEND_URL:-http://backend:5000}
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
+    ports:
+      - '3000:3000'
+    depends_on:
+      - backend
+    # Run the production server (already default CMD in Dockerfile)
+    command: ["pnpm", "--filter", "frontend", "start"]
+
+  backend:
+    image: ${BACKEND_IMAGE:-}
+    build:
+      context: .
+      dockerfile: ./apps/backend/Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      JWT_SECRET: ${JWT_SECRET:-changemechangemechangemechangeme}
+      TYPEORM_SYNCHRONIZE: 'false'
+    ports:
+      - '5000:5000'
+    depends_on:
+      - db
+      - redis
+    # Default CMD is `node dist/main` from Dockerfile
+
+  db:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-classifieds_db}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    # Do not expose the DB publicly in staging; comment out if you need external access
+    # ports:
+    #   - '5432:5432'
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    volumes:
+      - redis_data:/data
+    # ports:
+    #   - '6379:6379'
+
+volumes:
+  db_data:
+  redis_data:

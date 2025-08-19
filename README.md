@@ -215,7 +215,143 @@ CI/CD Guidance:
 
 ## Production Deployment
 
-(Details for production deployment would be added here in a real-world scenario, covering CI/CD, environment setup, scaling, etc.)
+This section outlines a pragmatic path to deploy both apps with Docker Compose on a single VM, plus notes for managed providers. Adjust to your infra and security policies.
+
+### 1) Production Environment Variables
+
+- Backend `apps/backend/.env` (example):
+  ```env
+  PORT=5000
+  DATABASE_URL=postgresql://<user>:<pass>@<db-host>:5432/classifieds_db
+  REDIS_URL=redis://<redis-host>:6379
+  JWT_SECRET=change_me_in_prod
+  NODE_ENV=production
+  TYPEORM_SYNCHRONIZE=false
+  ```
+- Frontend `apps/frontend/.env.production` (example):
+  ```env
+  NEXT_PUBLIC_BACKEND_URL=https://api.example.com
+  NEXT_PUBLIC_SITE_URL=https://example.com
+  NODE_ENV=production
+  ```
+
+Never commit real secrets. Prefer a secret manager (AWS SSM, GCP Secret Manager, Vault) or CI/CD secret store.
+
+### 2) Build & Run with Docker Compose
+
+The repo includes `docker-compose.yml`. For production, build and run in detached mode:
+
+```bash
+docker compose build --no-cache
+docker compose up -d
+```
+
+Recommended hardening:
+- Put a reverse proxy (e.g., Nginx/Caddy/Traefik) in front of the frontend and backend containers.
+- Terminate TLS at the proxy with certificates from Let’s Encrypt.
+- Only expose necessary ports publicly (e.g., 80/443 on the proxy). Keep DB/Redis internal.
+
+### 3) Database Migrations (Required)
+
+Always run migrations on deploy (CI/CD or a one‑shot job):
+
+```bash
+pnpm --filter backend run migration:run
+```
+
+Ensure `TYPEORM_SYNCHRONIZE=false` in production to avoid schema drift.
+
+### 4) Next.js Production Build
+
+The frontend image runs a Next.js production build during Docker build. If deploying without Docker:
+
+```bash
+pnpm --filter frontend install --frozen-lockfile
+pnpm --filter frontend build
+pnpm --filter frontend start
+```
+
+Set `NEXT_PUBLIC_*` variables at build time so static optimization embeds correct URLs.
+
+### 5) Health Checks
+
+- Backend: expose a simple health endpoint (e.g., `/health`) returning 200.
+- Frontend: root `/` should serve 200 once Next.js is started.
+- Configure your load balancer to check these endpoints.
+
+### 6) Logging & Monitoring
+
+- Backend logs are concise and safe for production; ship them to your aggregator (Datadog, ELK, Loki).
+- Add container restart policies and alerts for crash loops.
+
+### 7) CI/CD (Example: GitHub Actions)
+
+High‑level workflow:
+1. Cache pnpm and build artifacts.
+2. Lint, typecheck, run unit tests.
+3. Build Docker images for frontend and backend and push to registry.
+4. Run DB migrations.
+5. Deploy by updating the stack on your server or platform.
+
+Skeleton (pseudocode):
+```yaml
+name: deploy
+on: { push: { branches: [ main ] } }
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 9 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: 'pnpm' }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter frontend run typecheck && pnpm --filter backend test
+      - run: docker build -t registry.example.com/gcm-frontend:latest -f apps/frontend/Dockerfile .
+      - run: docker build -t registry.example.com/gcm-backend:latest -f apps/backend/Dockerfile .
+      - run: docker login registry.example.com -u ${{ secrets.REG_USER }} -p ${{ secrets.REG_PASS }}
+      - run: docker push registry.example.com/gcm-frontend:latest
+      - run: docker push registry.example.com/gcm-backend:latest
+  deploy:
+    needs: build-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH and deploy
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            docker pull registry.example.com/gcm-frontend:latest
+            docker pull registry.example.com/gcm-backend:latest
+            cd /srv/global-classifieds
+            docker compose up -d
+            docker exec backend pnpm --filter backend run migration:run
+```
+
+### 8) Managed Providers (Alternative)
+
+- Frontend only:
+  - Vercel/Netlify: point to `apps/frontend`, set env vars, build (`next build`) and deploy. Configure rewrites to API domain.
+- Backend only:
+  - Railway/Render/Fly.io/Heroku: deploy `apps/backend` with a managed Postgres + Redis. Set env vars and run `migration:run` on release.
+
+### 9) Security Checklist
+
+- Strong `JWT_SECRET` and key rotation policy.
+- HTTPS everywhere (HSTS on the proxy).
+- CORS: restrict origins in production.
+- Rate limiting enabled on auth endpoints (already implemented).
+- DB user with least privilege; regular backups.
+- Keep images and base OS up‑to‑date; rebuild on CVE bumps.
+
+### 10) Scaling Notes
+
+- Make backend stateless; session data should be in JWT/DB/Redis.
+- Add a CDN in front of the frontend for static assets and caching.
+- Horizontal scale via multiple app instances behind a load balancer; ensure sticky sessions only if required.
 
 ---
 
