@@ -38,7 +38,8 @@ jobs:
       - name: Typecheck
         run: |
           # Explicitly typecheck frontend against its project file to ensure aliases are respected
-          pnpm --filter frontend exec tsc -p apps/frontend/tsconfig.json --noEmit
+          # Note: when using --filter, pnpm runs in the package dir (apps/frontend), so use -p tsconfig.json
+          pnpm --filter frontend exec tsc -p tsconfig.json --noEmit
           # Still typecheck backend via its own script
           pnpm --filter backend run typecheck
 
