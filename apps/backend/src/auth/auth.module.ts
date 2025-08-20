@@ -6,12 +6,19 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './jwt.strategy';
-import { LocalStrategy } from './local.strategy'; // Import LocalStrategy
+import { LocalStrategy } from './local.strategy';
+import { PasswordService } from './password.service';
+import { RefreshTokenService } from './refresh-token.service';
+import { RefreshToken } from './entities/refresh-token.entity';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuditModule } from '../audit/audit.module';
 
 @Module({
   imports: [
+    TypeOrmModule.forFeature([RefreshToken]),
     UsersModule,
     PassportModule,
+    AuditModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => {
@@ -29,7 +36,7 @@ import { LocalStrategy } from './local.strategy'; // Import LocalStrategy
     }),
     ConfigModule,
   ],
-  providers: [AuthService, JwtStrategy, LocalStrategy], // Add LocalStrategy
+  providers: [AuthService, PasswordService, RefreshTokenService, JwtStrategy, LocalStrategy],
   controllers: [AuthController],
 })
 export class AuthModule {}
