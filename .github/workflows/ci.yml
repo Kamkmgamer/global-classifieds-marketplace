@@ -31,8 +31,16 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Show frontend tsconfig (debug)
+        run: |
+          echo "Using apps/frontend/tsconfig.json:" && echo "---" && cat apps/frontend/tsconfig.json && echo "---"
+
       - name: Typecheck
-        run: pnpm -w typecheck
+        run: |
+          # Explicitly typecheck frontend against its project file to ensure aliases are respected
+          pnpm --filter frontend exec tsc -p apps/frontend/tsconfig.json --noEmit
+          # Still typecheck backend via its own script
+          pnpm --filter backend run typecheck
 
       - name: Lint
         run: pnpm -w lint
