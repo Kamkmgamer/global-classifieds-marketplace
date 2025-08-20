@@ -22,6 +22,8 @@ jobs:
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
+        with:
+          standalone: true
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -42,8 +44,9 @@ jobs:
       - name: Define image tags
         id: vars
         run: |
-          FRONTEND_IMAGE=ghcr.io/${{ github.repository }}/frontend:${{ github.sha }}
-          BACKEND_IMAGE=ghcr.io/${{ github.repository }}/backend:${{ github.sha }}
+          REPO_LC="${GITHUB_REPOSITORY,,}"
+          FRONTEND_IMAGE="ghcr.io/${REPO_LC}/frontend:${GITHUB_SHA}"
+          BACKEND_IMAGE="ghcr.io/${REPO_LC}/backend:${GITHUB_SHA}"
           echo "FRONTEND_IMAGE=$FRONTEND_IMAGE" >> $GITHUB_OUTPUT
           echo "BACKEND_IMAGE=$BACKEND_IMAGE" >> $GITHUB_OUTPUT
 
@@ -75,14 +78,17 @@ jobs:
       - name: Determine image tags
         id: vars
         run: |
-          echo "FRONTEND_IMAGE=ghcr.io/${{ github.repository }}/frontend:${{ github.sha }}" >> $GITHUB_OUTPUT
-          echo "BACKEND_IMAGE=ghcr.io/${{ github.repository }}/backend:${{ github.sha }}" >> $GITHUB_OUTPUT
+          REPO_LC="${GITHUB_REPOSITORY,,}"
+          echo "FRONTEND_IMAGE=ghcr.io/${REPO_LC}/frontend:${GITHUB_SHA}" >> $GITHUB_OUTPUT
+          echo "BACKEND_IMAGE=ghcr.io/${REPO_LC}/backend:${GITHUB_SHA}" >> $GITHUB_OUTPUT
 
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
+        with:
+          standalone: true
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
