@@ -73,7 +73,7 @@ export default function FiltersBar({ className }: { className?: string }) {
           pattern="[0-9]*"
           placeholder="0"
           value={filters.minPrice}
-          onChange={(e) => set("minPrice", e.target.value.replace(/[^0-9]/g, ""))}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => set("minPrice", e.target.value.replace(/[^0-9]/g, ""))}
         />
       </div>
       <div className="flex flex-col">
@@ -86,7 +86,7 @@ export default function FiltersBar({ className }: { className?: string }) {
           pattern="[0-9]*"
           placeholder="2000"
           value={filters.maxPrice}
-          onChange={(e) => set("maxPrice", e.target.value.replace(/[^0-9]/g, ""))}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => set("maxPrice", e.target.value.replace(/[^0-9]/g, ""))}
         />
       </div>
       <div className="flex flex-col">
