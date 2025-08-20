@@ -5,13 +5,16 @@
     "jsx": "react-jsx",
     "module": "commonjs",
     "moduleResolution": "node",
-    "types": ["jest", "node", "react", "react-dom"]
+    "types": ["jest", "@testing-library/jest-dom", "node", "react", "react-dom"],
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true
   },
   "include": [
     "src/**/*.ts",
     "src/**/*.tsx",
     "src/**/*.d.ts",
-    "src/**/__tests__/**/*.*"
+    "src/**/__tests__/**/*.*",
+    "src/test/jest-globals.d.ts"
   ],
   "exclude": [
     "node_modules",

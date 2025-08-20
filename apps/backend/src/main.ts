@@ -6,8 +6,16 @@ import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { requestIdMiddleware } from './common/middleware/request-id.middleware';
+import { applyFileBasedSecrets } from './common/config/secrets.util';
+import { metricsHandler } from './observability/metrics';
+import { MetricsInterceptor } from './common/interceptors/metrics.interceptor';
+import { initTracing, shutdownTracing } from './observability/tracing';
 
 async function bootstrap() {
+  // Load secrets from *_FILE env vars (Docker/K8s secrets) before ConfigModule reads env
+  applyFileBasedSecrets();
+  // Initialize OpenTelemetry tracing early (no-op if OTEL_ENABLED!=true)
+  initTracing();
   const app = await NestFactory.create(AppModule);
   // CORS: allow configured origins; default permissive in dev
   const rawOrigins = process.env.CORS_ORIGINS || '';
@@ -23,7 +31,8 @@ async function bootstrap() {
 
   const { httpAdapter } = app.get(HttpAdapterHost); // Get HttpAdapterHost
   app.useGlobalFilters(new AllExceptionsFilter(httpAdapter)); // Apply global filter
-  app.useGlobalInterceptors(new LoggingInterceptor()); // Apply global interceptor
+  // Metrics interceptor should generally run before logging to capture timings consistently
+  app.useGlobalInterceptors(new MetricsInterceptor(), new LoggingInterceptor());
   // API Security Headers
   app.use(requestIdMiddleware);
   app.use(
@@ -44,6 +53,12 @@ async function bootstrap() {
     }),
   );
 
+  // Expose Prometheus metrics endpoint
+  const expressInstance = (app.getHttpAdapter() as any).getInstance?.();
+  if (expressInstance && typeof expressInstance.get === 'function') {
+    expressInstance.get('/metrics', metricsHandler);
+  }
+
   // OpenAPI (Swagger) - enable in non-production by default
   const enableSwagger = (process.env.SWAGGER_ENABLED || '').toLowerCase() === 'true' || process.env.NODE_ENV !== 'production';
   if (enableSwagger) {
@@ -60,5 +75,14 @@ async function bootstrap() {
   const port = process.env.PORT || 5000;
   await app.listen(port);
   console.log(`Application is running on: ${await app.getUrl()}`);
+
+  // Graceful shutdown: stop tracing
+  const shutdown = async () => {
+    await shutdownTracing();
+    process.exit(0);
+  };
+  process.on('SIGTERM', shutdown);
+  process.on('SIGINT', shutdown);
 }
 bootstrap();
+

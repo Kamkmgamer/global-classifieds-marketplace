@@ -1,34 +1,36 @@
-version: '3.8'
-
 services:
   # Frontend Service
   frontend:
     build:
       context: .
       dockerfile: ./apps/frontend/Dockerfile
+      target: runner
+      args:
+        NEXT_PUBLIC_BACKEND_URL: http://backend:5000
+        NEXT_PUBLIC_SITE_URL: http://localhost:3000
     ports:
       - '3000:3000'
-    volumes:
-      - ./apps/frontend:/app/apps/frontend
-      - /app/node_modules # Exclude node_modules from host bind mount
     environment:
-      - NODE_ENV=development
-      - NEXT_PUBLIC_BACKEND_URL=http://backend:5000 # Connects to backend service name
+      - NODE_ENV=production
+      - NEXT_PUBLIC_BACKEND_URL=http://backend:5000
+      - NEXT_PUBLIC_SITE_URL=http://localhost:3000
     depends_on:
       - backend
-    command: pnpm --filter frontend run dev
+    # No dev command; Next standalone server starts via Dockerfile CMD
 
   # Backend Service
   backend:
     build:
       context: .
       dockerfile: ./apps/backend/Dockerfile
+      target: builder
     ports:
       - '5000:5000'
       - '9229:9229' # For debugging
     volumes:
       - ./apps/backend:/app/apps/backend
       - /app/node_modules
+      - /app/apps/backend/node_modules
     environment:
       - NODE_ENV=development
       - PORT=5000
@@ -62,6 +64,38 @@ services:
     volumes:
       - redis_data:/data # Persist Redis data
 
+  # Prometheus (metrics)
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+    volumes:
+      - ./ops/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - '9090:9090'
+    depends_on:
+      - backend
+
+  # Grafana (dashboards)
+  grafana:
+    image: grafana/grafana:11.2.0
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SERVER_HTTP_PORT=3001
+    ports:
+      - '3001:3001'
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+
 volumes:
   db_data:
   redis_data:
+  prometheus_data:
+  grafana_data:

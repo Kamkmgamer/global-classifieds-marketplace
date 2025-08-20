@@ -1,3 +1,5 @@
+import '../../../test/jest-globals.d.ts';
+import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import RegisterPage from "../page";
@@ -15,7 +17,7 @@ jest.mock("@/hooks/use-toast", () => ({
 
 const apiPost = jest.fn();
 jest.mock("@/lib/http", () => ({
-  api: { post: (...args: any[]) => apiPost(...args) },
+  api: { post: (...args: unknown[]) => apiPost(...args) },
 }));
 
 describe("RegisterPage", () => {

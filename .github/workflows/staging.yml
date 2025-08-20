@@ -66,7 +66,7 @@ jobs:
           name: images
           path: |
             /tmp/f.txt
-        retention-days: 1
+          retention-days: 1
         if: ${{ always() }}
 
   deploy:

@@ -2,6 +2,7 @@ import { CanActivate, ExecutionContext, Injectable, HttpException, HttpStatus } 
 import { Cache } from '@nestjs/cache-manager';
 import { Inject } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { rateLimitBlockTotal } from '../../observability/metrics';
 
 @Injectable()
 export class RateLimitGuard implements CanActivate {
@@ -25,7 +26,7 @@ export class RateLimitGuard implements CanActivate {
 
     // Skip certain paths
     const path: string = req.path || req.url || '';
-    if (path.startsWith('/docs') || path.startsWith('/health')) return true;
+    if (path.startsWith('/docs') || path.startsWith('/health') || path.startsWith('/metrics')) return true;
 
     // Identify client
     const ip =
@@ -51,6 +52,8 @@ export class RateLimitGuard implements CanActivate {
       res.setHeader('Retry-After', Math.max(1, Math.ceil((resetAt - Date.now()) / 1000)).toString());
       res.setHeader('X-RateLimit-Remaining', '0');
       res.setHeader('X-RateLimit-Reset', resetAt.toString());
+      // Increment Prometheus counter for rate limit blocks
+      try { rateLimitBlockTotal.inc({ route: path }); } catch {}
       throw new HttpException('Too Many Requests', HttpStatus.TOO_MANY_REQUESTS);
     }
 
@@ -65,3 +68,4 @@ export class RateLimitGuard implements CanActivate {
     return true;
   }
 }
+

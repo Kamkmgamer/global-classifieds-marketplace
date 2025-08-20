@@ -14,8 +14,7 @@ services:
       - '3000:3000'
     depends_on:
       - backend
-    # Run the production server (already default CMD in Dockerfile)
-    command: ["pnpm", "--filter", "frontend", "start"]
+    # Use the Dockerfile's default CMD (Next.js standalone server)
 
   backend:
     image: ${BACKEND_IMAGE:-}

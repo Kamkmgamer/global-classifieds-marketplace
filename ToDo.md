@@ -82,8 +82,10 @@ Security & Auth
   - Env: `LOCKOUT_THRESHOLD` (default 5), `LOCKOUT_TTL_MS` (default 900000), `LOCKOUT_FAIL_WINDOW_MS` (default 600000)
   - Owner: KAMKM
 
-- [ ] (P2) Secrets management in production
-  - Cloud secrets manager; remove plaintext secrets from env
+- [~] (P2) Secrets management in production
+  - Implemented: file-based secrets via `*_FILE` convention (Docker/K8s secrets). `JWT_SECRET_FILE`, `DATABASE_URL_FILE`, etc. are read on bootstrap.
+  - Files: `apps/backend/src/common/config/secrets.util.ts`, `apps/backend/src/main.ts`
+  - Next: evaluate cloud secrets manager integration (AWS SM/Azure KV/GCP SM) and update deploy docs
   - Owner: KAMKM
 
 Observability
@@ -92,8 +94,14 @@ Observability
   - Files: `apps/backend/src/common/middleware/request-id.middleware.ts`, `apps/backend/src/common/interceptors/logging.interceptor.ts`, `apps/backend/src/main.ts`
   - Owner: KAMKM
 
-- [ ] (P2) Metrics & tracing (OpenTelemetry/Prometheus)
-  - Metrics: latency, error rate, rate-limit hits, cache hit ratio
+- [ ] (P2) Metrics & tracing (OpenTelemetry/Prometheus) — deferred
+  - Implemented: Prometheus metrics with `prom-client`
+    - `/metrics` endpoint exposed
+    - Metrics: latency histogram, total requests, error count, rate-limit blocks; cache hit/miss counters scaffolded
+  - Tracing: OpenTelemetry scaffolding with OTLP HTTP exporter (env-gated via `OTEL_ENABLED`)
+  - Files: `apps/backend/src/observability/metrics.ts`, `apps/backend/src/common/interceptors/metrics.interceptor.ts`, `apps/backend/src/common/guards/rate-limit.guard.ts`, `apps/backend/src/observability/tracing.ts`, `apps/backend/src/main.ts`, `apps/backend/src/app.module.ts`
+  - Env: `OTEL_ENABLED`, `OTEL_SERVICE_NAME`, `OTEL_SERVICE_NAMESPACE` (opt), `OTEL_EXPORTER_OTLP_ENDPOINT` (default http://localhost:4318), `OTEL_EXPORTER_OTLP_HEADERS` (opt)
+  - Status: Deferred for later; revisit after initial release to wire collector backend (Jaeger/Tempo) and finalize auto-instrumentations
   - Owner: KAMKM
 
 Database & Performance

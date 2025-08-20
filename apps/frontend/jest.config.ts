@@ -17,6 +17,11 @@ const config = {
   },
   testMatch: ['**/__tests__/**/*.(spec|test).(ts|tsx)'],
   collectCoverageFrom: ['src/**/*.(ts|tsx)'],
+  globals: {
+    'ts-jest': {
+      tsconfig: '<rootDir>/tsconfig.jest.json'
+    }
+  },
 };
 
 export default config;

@@ -20,9 +20,19 @@ export type HttpOptions<TSchema extends z.ZodTypeAny | undefined = undefined> = 
 };
 
 function withBase(url: string): string {
-  const base = env.NEXT_PUBLIC_BACKEND_URL;
-  if (!base) return url; // allow absolute/relative usage in dev
+  // If already absolute, do nothing
   if (/^https?:/i.test(url)) return url;
+
+  // On the client, always proxy through Next.js to avoid exposing backend hostnames
+  if (typeof window !== "undefined") {
+    const slash = url.startsWith("/") ? "" : "/";
+    // Ensure we only prefix once
+    return url.startsWith("/api/") || url === "/api" ? url : `/api${slash}${url}`;
+  }
+
+  // On the server (Edge/Node), call the backend directly if configured
+  const base = env.NEXT_PUBLIC_BACKEND_URL;
+  if (!base) return url; // allow relative usage in dev if no backend configured
   const slash = url.startsWith("/") ? "" : "/";
   return `${base}${slash}${url}`;
 }

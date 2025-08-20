@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 const securityHeaders = [
   { key: "X-DNS-Prefetch-Control", value: "on" },
@@ -55,11 +56,25 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizeCss: true,
   },
+  // Enable standalone output for smaller Docker images and a self-contained server
+  output: "standalone",
+  // Ensure output file tracing works from the monorepo root so the standalone copy
+  // includes all required production dependencies (e.g., "next")
+  outputFileTracingRoot: path.join(__dirname, "../../"),
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "picsum.photos" },
     ],
+  },
+  async rewrites() {
+    const backend = process.env.NEXT_PUBLIC_BACKEND_URL || "http://backend:5000";
+    return [
+      {
+        source: "/api/:path*",
+        destination: `${backend}/:path*`,
+      },
+    ];
   },
   async headers() {
     return [

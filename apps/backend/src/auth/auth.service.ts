@@ -6,6 +6,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { Cache } from '@nestjs/cache-manager';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { cacheHitTotal, cacheMissTotal } from '../observability/metrics';
 
 @Injectable()
 export class AuthService {
@@ -36,13 +37,26 @@ export class AuthService {
   async isLocked(email: string): Promise<boolean> {
     const key = this.lockKey(email);
     const val = await this.cache.get<any>(key);
+    try {
+      if (val) cacheHitTotal.inc({ source: 'auth_isLocked' });
+      else cacheMissTotal.inc({ source: 'auth_isLocked' });
+    } catch {
+      // metrics should never break auth flow
+    }
     return Boolean(val);
   }
 
   async onFailedLogin(email: string): Promise<void> {
     const fKey = this.failKey(email);
     const lKey = this.lockKey(email);
-    const current = (await this.cache.get<number>(fKey)) || 0;
+    const got = await this.cache.get<number>(fKey);
+    try {
+      if (typeof got === 'number') cacheHitTotal.inc({ source: 'auth_onFailedLogin' });
+      else cacheMissTotal.inc({ source: 'auth_onFailedLogin' });
+    } catch {
+      // noop
+    }
+    const current = got || 0;
     const next = current + 1;
     const threshold = this.getThreshold();
     if (next >= threshold) {

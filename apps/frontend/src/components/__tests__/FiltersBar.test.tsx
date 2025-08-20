@@ -1,4 +1,4 @@
-import { jest } from "@jest/globals";
+import React from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import FiltersBar from "../FiltersBar";
@@ -12,35 +12,18 @@ jest.mock("next/navigation", () => ({
 
 // Mock shadcn/radix Select to a simple native <select>
 jest.mock("@/components/ui/select", () => {
-  const React = require("react");
-  const Select = ({ value, onValueChange, children }: any) => {
-    // Flatten items from SelectContent
-    const items: Array<{ value: string; label: string }> = [];
-    React.Children.forEach(children, (child: any) => {
-      if (!child) return;
-      // Look into SelectContent children
-      if (child.props && child.props.children) {
-        React.Children.forEach(child.props.children, (grand: any) => {
-          if (grand && grand.type && grand.props && grand.props.value) {
-            items.push({ value: grand.props.value, label: grand.props.children });
-          }
-        });
-      }
-    });
-    return (
-      <select aria-label="Location" value={value} onChange={(e) => onValueChange?.(e.target.value)}>
-        {items.map((it) => (
-          <option key={it.value} value={it.value}>
-            {it.label}
-          </option>
-        ))}
-      </select>
-    );
-  };
-  const SelectTrigger = ({ children, ...props }: any) => <div {...props}>{children}</div>;
-  const SelectValue = ({ placeholder }: any) => <span>{placeholder}</span>;
-  const SelectContent = ({ children }: any) => <div>{children}</div>;
-  const SelectItem = ({ value, children }: any) => <option value={value}>{children}</option>;
+  const Select = ({ value, onValueChange }: { value: string; onValueChange?: (value: string) => void }) => (
+    <select aria-label="Location" value={value} onChange={(e) => onValueChange?.(e.target.value)}>
+      <option value="">All Locations</option>
+      <option value="Tokyo">Tokyo</option>
+      <option value="New York">New York</option>
+      <option value="London">London</option>
+    </select>
+  );
+  const SelectTrigger = ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => <div {...props}>{children}</div>;
+  const SelectValue = ({ placeholder }: { placeholder?: string }) => <span>{placeholder}</span>;
+  const SelectContent = ({ children }: { children: React.ReactNode }) => <div>{children}</div>;
+  const SelectItem = ({ value, children }: { value: string; children: React.ReactNode }) => <option value={value}>{children}</option>;
   return { Select, SelectTrigger, SelectValue, SelectContent, SelectItem };
 });
 

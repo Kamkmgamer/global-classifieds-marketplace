@@ -50,6 +50,12 @@ import * as Joi from 'joi';
         LOCKOUT_THRESHOLD: Joi.number().min(1).optional(),
         LOCKOUT_TTL_MS: Joi.number().min(1000).optional(),
         LOCKOUT_FAIL_WINDOW_MS: Joi.number().min(1000).optional(),
+        // OpenTelemetry
+        OTEL_ENABLED: Joi.string().valid('true', 'false').optional(),
+        OTEL_SERVICE_NAME: Joi.string().optional(),
+        OTEL_SERVICE_NAMESPACE: Joi.string().optional(),
+        OTEL_EXPORTER_OTLP_ENDPOINT: Joi.string().uri().optional(),
+        OTEL_EXPORTER_OTLP_HEADERS: Joi.string().optional(),
       }),
     }),
     TypeOrmModule.forRootAsync({

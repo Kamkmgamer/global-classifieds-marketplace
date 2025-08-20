@@ -110,6 +110,30 @@ docker compose version
 
 ---
 
+## Observability (Metrics & Tracing)
+
+* __Prometheus metrics__
+  - Backend exposes Prometheus metrics at `GET /metrics`.
+  - Prometheus config is in `ops/prometheus.yml` (scrapes `backend:5000/metrics`).
+  - Start Prometheus and Grafana via Docker Compose (see below), then visit:
+    - Prometheus: `http://localhost:9090`
+    - Grafana: `http://localhost:3001` (default admin/admin)
+
+* __Grafana datasource__
+  - Add Prometheus datasource URL: `http://prometheus:9090` (when accessed from Grafana container).
+  - Suggested dashboards: Node.js/NestJS HTTP latency histogram, error rates, cache hit/miss (`cache_hit_total{source}`, `cache_miss_total{source}`), rate limiter blocks, request totals.
+
+* __OpenTelemetry tracing__
+  - The backend supports OTLP HTTP export. Set env vars in `apps/backend/.env`:
+    ```env
+    OTEL_ENABLED=true
+    OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+    # optional: OTEL_EXPORTER_OTLP_HEADERS=Authorization=Bearer <token>
+    ```
+  - Provide an OTEL Collector (example config in `ops/otel-collector-config.yaml`). Integrate with Jaeger/Tempo as needed.
+
+---
+
 ## Common Scripts
 
 - **Install**: `pnpm install`

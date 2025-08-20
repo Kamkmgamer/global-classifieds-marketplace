@@ -4,42 +4,57 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Install pnpm
-RUN npm install -g pnpm
+RUN npm install -g pnpm@10.13.1
 
-# Copy workspace configuration
-COPY pnpm-workspace.yaml .
-COPY package.json .
+# Accept build-time public envs for Next.js and make them available during build
+ARG NEXT_PUBLIC_BACKEND_URL
+ARG NEXT_PUBLIC_SITE_URL
+ENV NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL}
+ENV NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}
 
-# Copy frontend's package.json
-COPY apps/frontend/package.json ./apps/frontend/
+# Copy root workspace files for better install caching
+COPY pnpm-workspace.yaml ./
+COPY pnpm-lock.yaml ./
+COPY package.json ./
 
-# Install only production dependencies for the frontend
-RUN pnpm install --prod --filter frontend
+# Copy only the frontend package manifest first (to leverage layer cache)
+COPY apps/frontend/package.json ./apps/frontend/package.json
+
+# Prime pnpm store with filtered install (best-effort)
+RUN pnpm install --filter frontend...
 
 # Copy the rest of the source code
 COPY . .
 
-# Build the frontend application
+# Ensure workspace links are correct after copying all manifests
+RUN pnpm install --filter frontend...
+
+# Dev stage: used by docker-compose for HMR (no production build)
+FROM builder AS dev
+
+# Default command can be overridden by compose; set a sensible default
+CMD ["pnpm", "--filter", "frontend", "run", "dev"]
+
+# Prod build stage: builds standalone output
+FROM builder AS build
 RUN pnpm --filter frontend build
 
-# Stage 2: Create the production image
-FROM node:20-alpine
+# Stage 2: Create the production image using Next standalone output
+FROM node:20-alpine AS runner
 
 # Create a non-root user
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 WORKDIR /app
 
-# Set the user
-USER appuser
+# Copy Next.js standalone server and static assets
+COPY --from=build /app/apps/frontend/.next/standalone ./
+COPY --from=build /app/apps/frontend/.next/static ./apps/frontend/.next/static
+COPY --from=build /app/apps/frontend/public ./apps/frontend/public
 
-# Copy the built application from the builder stage
-COPY --from=builder /app/apps/frontend/.next ./apps/frontend/.next
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/apps/frontend/node_modules ./apps/frontend/node_modules
-COPY --from=builder /app/apps/frontend/public ./apps/frontend/public
-COPY --from=builder /app/apps/frontend/package.json ./apps/frontend/
+USER appuser
 
 EXPOSE 3000
 
-CMD ["pnpm", "--filter", "frontend", "start"]
+# In monorepo standalone output, server entry typically resides under the app path
+CMD ["node", "apps/frontend/server.js"]
