@@ -56,8 +56,16 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizeCss: true,
   },
+  webpack: (config) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': path.resolve(__dirname, 'src'),
+    };
+    return config;
+  },
   // Enable standalone output for smaller Docker images and a self-contained server
-  output: "standalone",
+  // Temporarily disabled due to Windows symlink permission issues in local builds
+  // output: "standalone",
   // Ensure output file tracing works from the monorepo root so the standalone copy
   // includes all required production dependencies (e.g., "next")
   outputFileTracingRoot: path.join(__dirname, "../../"),
