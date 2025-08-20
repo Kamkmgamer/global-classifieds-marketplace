@@ -1,8 +1,8 @@
-export { Button, buttonVariants, type ButtonProps } from "@/components/ui/button"
-export { Input } from "@/components/ui/input"
-export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
-export { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-export { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from "@/components/ui/sheet"
+export { Button, buttonVariants, type ButtonProps } from "./button"
+export { Input } from "./input"
+export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from "./card"
+export { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./select"
+export { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from "./sheet"
 export {
   Toast,
   ToastAction,
@@ -13,6 +13,6 @@ export {
   ToastViewport,
   type ToastActionElement,
   type ToastProps,
-} from "@/components/ui/toast"
-export { Toaster } from "@/components/ui/toaster"
-export { ThemeToggle } from "@/components/ui/ThemeToggle"
+} from "./toast"
+export { Toaster } from "./toaster"
+export { ThemeToggle } from "./ThemeToggle"
