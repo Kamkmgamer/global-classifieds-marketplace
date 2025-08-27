@@ -32,8 +32,8 @@ export class SearchService {
     const { q, location, minPrice, maxPrice, limit = 12, offset = 0, sort = 'relevance' } = query;
 
     let sqlQuery = this.listingRepository.createQueryBuilder('listing');
-    let whereConditions: string[] = [];
-    let parameters: Record<string, any> = {};
+    const whereConditions: string[] = [];
+    const parameters: Record<string, any> = {};
 
     // Full-text search with ranking
     if (q && q.trim()) {

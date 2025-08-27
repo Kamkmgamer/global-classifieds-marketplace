@@ -53,7 +53,9 @@ export class RateLimitGuard implements CanActivate {
       res.setHeader('X-RateLimit-Remaining', '0');
       res.setHeader('X-RateLimit-Reset', resetAt.toString());
       // Increment Prometheus counter for rate limit blocks
-      try { rateLimitBlockTotal.inc({ route: path }); } catch {}
+      try { rateLimitBlockTotal.inc({ route: path }); } catch {
+        // no-op: metric increments should not fail requests
+      }
       throw new HttpException('Too Many Requests', HttpStatus.TOO_MANY_REQUESTS);
     }
 

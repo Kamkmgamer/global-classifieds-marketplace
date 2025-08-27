@@ -35,7 +35,7 @@ export function initTracing() {
   try {
     sdk.start();
   } catch (err: any) {
-    // eslint-disable-next-line no-console
+     
     console.warn('[otel] Failed to start tracing:', err?.message || err);
   }
 
@@ -46,7 +46,7 @@ export async function shutdownTracing() {
   try {
     await sdk?.shutdown();
   } catch (e) {
-    // eslint-disable-next-line no-console
+     
     console.warn('[otel] Failed to shutdown tracing:', (e as Error)?.message || e);
   } finally {
     sdk = null;

@@ -1,7 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { Cache } from '@nestjs/cache-manager';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Listing } from '../listing.entity';
 import { cacheHitTotal, cacheMissTotal } from '../../observability/metrics';
 
 export interface CacheEntry<T> {
@@ -205,6 +204,7 @@ export class ListingsCacheService {
     return normalized;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private recordCacheHit(key: string, isStale = false): void {
     try {
       cacheHitTotal.inc({ source: 'listings_cache' });
@@ -213,6 +213,7 @@ export class ListingsCacheService {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private recordCacheMiss(key: string): void {
     try {
       cacheMissTotal.inc({ source: 'listings_cache' });

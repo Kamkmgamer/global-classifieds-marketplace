@@ -46,7 +46,7 @@ export class LoggingInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const req = context.switchToHttp().getRequest();
     const { method, url, body, query } = req;
-    const requestId: string | undefined = (req as any).requestId || req.headers['x-request-id'];
+    const requestId: string | undefined = (req).requestId || req.headers['x-request-id'];
     const now = Date.now();
     const isProd = process.env.NODE_ENV === 'production';
     if (isProd) {

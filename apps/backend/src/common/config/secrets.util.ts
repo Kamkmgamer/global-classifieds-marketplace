@@ -24,7 +24,7 @@ export function applyFileBasedSecrets() {
       }
     } catch (err) {
       // Avoid throwing during bootstrap; surface minimal info for ops
-      // eslint-disable-next-line no-console
+       
       console.warn(`[secrets] Failed to read ${key}: ${(err as Error).message}`);
     }
   }

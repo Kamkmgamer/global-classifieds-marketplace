@@ -34,7 +34,7 @@ export class PasswordService {
       }
       
       return false;
-    } catch (error) {
+    } catch {
       return false;
     }
   }

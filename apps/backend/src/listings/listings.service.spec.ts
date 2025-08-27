@@ -19,7 +19,7 @@ function makeService(mocks?: {
   cache?: any;
 }) {
   const repo = (mocks?.repo || (repoMock() as any)) as Repository<Listing>;
-  const cache = (mocks?.cache || (cacheMock() as any)) as any;
+  const cache = (mocks?.cache || (cacheMock() as any));
   // Bypass Nest injection by calling constructor directly
   return new ListingsService(repo, cache);
 }
@@ -38,8 +38,8 @@ describe('ListingsService', () => {
 
     const dto = { title: 'Bike', price: 100 } as Partial<Listing>;
     const entity = { id: '1', ...dto } as Listing;
-    (repo.create as jest.Mock).mockReturnValue(entity);
-    (repo.save as jest.Mock).mockResolvedValue(entity);
+    (repo.create).mockReturnValue(entity);
+    (repo.save).mockResolvedValue(entity);
 
     const res = await svc.create(dto);
 
@@ -54,7 +54,7 @@ describe('ListingsService', () => {
     const svc = makeService({ repo: repo as any, cache });
 
     const cached = { listings: [{ id: 'l1' } as Listing], total: 1 };
-    (cache.get as jest.Mock).mockResolvedValue(cached);
+    (cache.get).mockResolvedValue(cached);
 
     const res = await svc.findAll({ limit: '12', page: '1' });
 
@@ -68,13 +68,13 @@ describe('ListingsService', () => {
     const cache = cacheMock();
     const svc = makeService({ repo: repo as any, cache });
 
-    (cache.get as jest.Mock).mockResolvedValue(undefined);
+    (cache.get).mockResolvedValue(undefined);
 
     const listings: Listing[] = [
       { id: '1', title: 'Phone', price: 200 } as any,
       { id: '2', title: 'TV', price: 300 } as any,
     ];
-    (repo.findAndCount as jest.Mock).mockResolvedValue([listings, listings.length]);
+    (repo.findAndCount).mockResolvedValue([listings, listings.length]);
 
     const res = await svc.findAll({ q: 'Ph', sort: 'price-asc', minPrice: '100' });
 

@@ -34,7 +34,7 @@ describe('RateLimitGuard', () => {
 
   it('allows request under global limit and sets headers', async () => {
     const cache = cacheMock();
-    (cache.get as jest.Mock).mockResolvedValue(0);
+    (cache.get).mockResolvedValue(0);
 
     const guard = new RateLimitGuard(cache as any);
     const ctx = makeContext('/api/listings');
@@ -48,7 +48,7 @@ describe('RateLimitGuard', () => {
 
   it('throws when exceeding global limit', async () => {
     const cache = cacheMock();
-    (cache.get as jest.Mock).mockResolvedValue(120); // default max
+    (cache.get).mockResolvedValue(120); // default max
 
     const guard = new RateLimitGuard(cache as any);
     const ctx = makeContext('/api/listings');
@@ -61,7 +61,7 @@ describe('RateLimitGuard', () => {
 
   it('applies stricter auth limits for /auth/login', async () => {
     const cache = cacheMock();
-    (cache.get as jest.Mock).mockResolvedValue(10); // default authMax = 10
+    (cache.get).mockResolvedValue(10); // default authMax = 10
 
     const guard = new RateLimitGuard(cache as any);
     const ctx = makeContext('/auth/login');
@@ -77,7 +77,7 @@ describe('RateLimitGuard', () => {
     process.env.RATE_LIMIT_AUTH_WINDOW_MS = '10000';
 
     const cache = cacheMock();
-    (cache.get as jest.Mock).mockResolvedValue(3);
+    (cache.get).mockResolvedValue(3);
 
     const guard = new RateLimitGuard(cache as any);
     const ctx = makeContext('/auth/register');
