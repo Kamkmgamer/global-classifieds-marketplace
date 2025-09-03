@@ -31,8 +31,9 @@ async function fetchListings(limit: number = 6) {
     >(`/listings?limit=${limit}`, { cache: 'no-store', schema: ListingsResponseSchema, retries: 2, timeoutMs: 8000 });
     return data.listings;
   } catch (err) {
-    // Avoid noisy errors in dev when backend is down; surface as a warning and show mock data
-    console.warn('Listings unavailable, using mock data:', err);
+    // Avoid noisy stack traces when backend is down; show concise warning and use mock data
+    const message = err instanceof Error ? err.message : String(err);
+    console.warn('Listings unavailable, using mock data:', message);
     return mock();
   }
 }
