@@ -10,6 +10,8 @@
   --border: 226 232 240; /* slate-200 */
   --primary: 59 130 246; /* blue-500 */
   --primary-foreground: 255 255 255; /* white */
+  --accent: 14 165 233; /* sky-500 */
+  --accent-foreground: 255 255 255; /* white */
   --secondary: 236 236 236; /* neutral-200 */
   --secondary-foreground: 23 23 23; /* neutral-900 */
   --destructive: 239 68 68; /* red-500 */
@@ -32,6 +34,8 @@
   --border: 45 62 89; /* slate-700 */
   --primary: 34 211 238; /* cyan-400 */
   --primary-foreground: 15 23 42; /* slate-950 */
+  --accent: 56 189 248; /* sky-400 */
+  --accent-foreground: 15 23 42; /* slate-950 */
   --secondary: 30 41 59; /* slate-800 */
   --secondary-foreground: 203 213 225; /* slate-300 */
   --destructive: 239 68 68; /* red-500 */
@@ -49,6 +53,10 @@
 body {
   background-color: rgb(var(--background));
   color: rgb(var(--foreground));
+  background-image:
+    radial-gradient(45rem 30rem at 120% -10%, rgba(var(--primary), 0.06), transparent 60%),
+    radial-gradient(30rem 20rem at -10% -10%, rgba(var(--accent), 0.06), transparent 60%);
+  background-attachment: fixed;
 }
 
 /* Design tokens mapped to Tailwind utility aliases */
@@ -72,7 +80,17 @@ body {
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    line-height: 1.6;
   }
+
+  /* Headings scale tuned for clarity and hierarchy */
+  h1 { font-size: clamp(2rem, 1.2rem + 2vw, 3rem); font-weight: 700; letter-spacing: -0.02em; }
+  h2 { font-size: clamp(1.5rem, 1rem + 1.2vw, 2.25rem); font-weight: 700; letter-spacing: -0.01em; }
+  h3 { font-size: clamp(1.25rem, 0.9rem + 0.8vw, 1.75rem); font-weight: 600; }
+  h4 { font-size: 1.125rem; font-weight: 600; }
+  p { color: rgb(var(--foreground)); }
+  a { color: inherit; text-decoration: none; }
+  a:hover { color: rgb(var(--primary)); }
 
   ::selection {
     background: rgba(var(--primary),0.25);
@@ -93,6 +111,8 @@ body {
   .bg-primary { background-color: rgb(var(--primary)); }
   .text-primary { color: rgb(var(--primary)); }
   .text-primary-foreground { color: rgb(var(--primary-foreground)); }
+  .bg-accent { background-color: rgb(var(--accent)); }
+  .text-accent-foreground { color: rgb(var(--accent-foreground)); }
   .bg-secondary { background-color: rgb(var(--secondary)); }
   .text-secondary-foreground { color: rgb(var(--secondary-foreground)); }
   .bg-destructive { background-color: rgb(var(--destructive)); }
@@ -105,4 +125,18 @@ body {
   .text-popover-foreground { color: rgb(var(--popover-foreground)); }
   .border-input { border-color: rgb(var(--input)); }
   .ring-ring { --tw-ring-color: rgb(var(--ring)); }
+
+  /* Glass panel utility */
+  .glass { @apply bg-background/70 backdrop-blur-md border border-border/60 shadow-md-soft; }
+
+  /* Section spacing utility */
+  .section { @apply py-12 md:py-16; }
+
+  /* Container utility aligned with max width */
+  .container-prose { @apply container mx-auto max-w-7xl px-4; }
+
+  /* Soft shadow helpers aligned with Tailwind extension */
+  .shadow-sm-soft { box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.04), 0 1px 1px -1px rgb(0 0 0 / 0.04); }
+  .shadow-md-soft { box-shadow: 0 8px 24px -12px rgb(0 0 0 / 0.15); }
+  .shadow-lg-soft { box-shadow: 0 12px 32px -12px rgb(0 0 0 / 0.2); }
 }
