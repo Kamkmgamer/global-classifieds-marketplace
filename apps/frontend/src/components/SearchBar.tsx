@@ -23,7 +23,7 @@ export default function SearchBar({ className }: { className?: string }) {
     <form onSubmit={onSubmit} className={className} role="search">
       <div className="flex gap-2">
         <Input
-          
+          className="h-12 rounded-lg shadow-sm-soft focus:shadow-md-soft"
           placeholder="Search listings…"
           value={q}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQ(e.target.value)}
