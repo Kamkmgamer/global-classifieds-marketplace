@@ -15,8 +15,8 @@ const socialLinks = [
 
 export function Footer() {
   return (
-    <footer className="border-t border-border/40 bg-background/95 backdrop-blur-sm">
-      <div className="container mx-auto max-w-7xl px-4 py-8">
+    <footer className="mt-8 border-t border-border/60 glass">
+      <div className="container-prose py-8">
         <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
           <div className="text-center sm:text-left">
             <p className="text-sm text-muted-foreground">
@@ -28,7 +28,7 @@ export function Footer() {
               <Link
                 key={href}
                 href={href}
-                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                className="text-sm text-muted-foreground transition-colors hover:text-primary"
               >
                 {label}
               </Link>
@@ -39,7 +39,7 @@ export function Footer() {
               <Link
                 key={Icon.displayName}
                 href={href}
-                className="text-muted-foreground transition-colors hover:text-foreground"
+                className="text-muted-foreground transition-colors hover:text-primary"
               >
                 <Icon className="h-5 w-5" />
                 <span className="sr-only">{Icon.displayName}</span>
