@@ -23,22 +23,24 @@ export function Navbar() {
   const closeSheet = () => setSheetOpen(false);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-[rgb(var(--border)/0.6)] bg-background/70 backdrop-blur-lg">
-      <div className="container mx-auto max-w-7xl px-4">
+    <header className="sticky top-0 z-40 glass">
+      <div className="container-prose">
         <nav className="flex h-16 items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 font-semibold">
-            <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
+          <Link href="/" className="flex items-center gap-2 font-semibold hover:opacity-90 transition-opacity">
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-sm-soft">
               G
             </span>
-            <span>Global Classifieds</span>
+            <span className="tracking-tight">Global Classifieds</span>
           </Link>
           <div className="hidden items-center gap-4 md:flex">
             {navLinks.map(({ href, label }) => (
               <Link
                 key={href}
                 href={href}
-                className={`text-sm font-medium transition-colors hover:text-primary ${
+                className={`relative text-sm font-medium transition-colors hover:text-primary ${
                   pathname === href ? "text-primary" : "text-muted-foreground"
+                } after:absolute after:-bottom-2 after:left-0 after:h-0.5 after:w-full after:scale-x-0 after:bg-primary after:transition-transform after:duration-200 hover:after:scale-x-100 ${
+                  pathname === href ? "after:scale-x-100" : ""
                 }`}
               >
                 {label}
@@ -46,19 +48,19 @@ export function Navbar() {
             ))}
             {isAuthenticated ? (
               <>
-                <Button asChild>
+                <Button asChild className="shadow-sm-soft hover:shadow-md-soft active:translate-y-[1px]">
                   <Link href="/post">Post an Ad</Link>
                 </Button>
-                <Button variant="outline" onClick={logout}>
+                <Button variant="outline" onClick={logout} className="hover:bg-accent/10">
                   Logout
                 </Button>
               </>
             ) : (
               <>
-                <Button asChild variant="outline">
+                <Button asChild variant="outline" className="hover:bg-accent/10">
                   <Link href="/login">Login</Link>
                 </Button>
-                <Button asChild>
+                <Button asChild className="shadow-sm-soft hover:shadow-md-soft active:translate-y-[1px]">
                   <Link href="/register">Register</Link>
                 </Button>
               </>
@@ -71,7 +73,7 @@ export function Navbar() {
             <ThemeToggle />
             <Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
               <SheetTrigger asChild>
-                <Button variant="outline" size="icon">
+                <Button variant="outline" size="icon" className="hover:bg-accent/10">
                   {isSheetOpen ? ( // Conditionally render XIcon or MenuIcon
                     <XIcon className="h-4 w-4" />
                   ) : (
@@ -88,7 +90,7 @@ export function Navbar() {
                 <div className="flex h-full flex-col">
                   <div className="flex items-center justify-between border-b pb-4">
                     <Link href="/" className="flex items-center gap-2 font-semibold" onClick={closeSheet}>
-                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
+                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-sm-soft">
                         G
                       </span>
                       <span>Global Classifieds</span>
@@ -112,19 +114,19 @@ export function Navbar() {
                     ))}
                     {isAuthenticated ? (
                       <>
-                        <Button asChild className="w-full" onClick={closeSheet}>
+                        <Button asChild className="w-full shadow-sm-soft hover:shadow-md-soft active:translate-y-[1px]" onClick={closeSheet}>
                           <Link href="/post">Post an Ad</Link>
                         </Button>
-                        <Button variant="outline" className="w-full" onClick={() => { logout(); closeSheet(); }}>
+                        <Button variant="outline" className="w-full hover:bg-accent/10" onClick={() => { logout(); closeSheet(); }}>
                           Logout
                         </Button>
                       </>
                     ) : (
                       <>
-                        <Button asChild variant="outline" className="w-full" onClick={closeSheet}>
+                        <Button asChild variant="outline" className="w-full hover:bg-accent/10" onClick={closeSheet}>
                           <Link href="/login">Login</Link>
                         </Button>
-                        <Button asChild className="w-full" onClick={closeSheet}>
+                        <Button asChild className="w-full shadow-sm-soft hover:shadow-md-soft active:translate-y-[1px]" onClick={closeSheet}>
                           <Link href="/register">Register</Link>
                         </Button>
                       </>
