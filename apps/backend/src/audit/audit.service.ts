@@ -1,7 +1,22 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { AuditLog, AuditAction } from './entities/audit-log.entity';
+import { Injectable, Inject } from '@nestjs/common';
+import { auditLogs } from '../db/schema';
+import type { Drizzle } from '../db/drizzle.module';
+import { desc } from 'drizzle-orm';
+
+export enum AuditAction {
+  USER_LOGIN = 'user_login',
+  USER_LOGOUT = 'user_logout',
+  USER_REGISTER = 'user_register',
+  PASSWORD_CHANGE = 'password_change',
+  TOKEN_REFRESH = 'token_refresh',
+  ACCOUNT_LOCKOUT = 'account_lockout',
+  FAILED_LOGIN = 'failed_login',
+  LISTING_CREATE = 'listing_create',
+  LISTING_UPDATE = 'listing_update',
+  LISTING_DELETE = 'listing_delete',
+  ADMIN_ACTION = 'admin_action',
+  SECURITY_EVENT = 'security_event',
+}
 
 export interface AuditLogData {
   action: AuditAction;
@@ -20,21 +35,16 @@ export interface AuditLogData {
 @Injectable()
 export class AuditService {
   constructor(
-    @InjectRepository(AuditLog)
-    private auditLogRepository: Repository<AuditLog>,
+    @Inject('DRIZZLE') private db: Drizzle,
   ) {}
 
   async log(data: AuditLogData): Promise<void> {
     try {
-      const auditLog = this.auditLogRepository.create({
+      await this.db.insert(auditLogs).values({
         ...data,
         success: data.success ?? true,
-        createdAt: new Date(),
       });
-      
-      await this.auditLogRepository.save(auditLog);
     } catch (error) {
-      // Audit logging should never break the main application flow
       console.error('Failed to write audit log:', error);
     }
   }
@@ -135,43 +145,10 @@ export class AuditService {
     });
   }
 
-  async getAuditLogs(
-    filters: {
-      userId?: string;
-      action?: AuditAction;
-      startDate?: Date;
-      endDate?: Date;
-      ipAddress?: string;
-    } = {},
+  async getRecentLogs(
     limit = 100,
     offset = 0,
-  ): Promise<AuditLog[]> {
-    const query = this.auditLogRepository.createQueryBuilder('audit');
-
-    if (filters.userId) {
-      query.andWhere('audit.userId = :userId', { userId: filters.userId });
-    }
-
-    if (filters.action) {
-      query.andWhere('audit.action = :action', { action: filters.action });
-    }
-
-    if (filters.startDate) {
-      query.andWhere('audit.createdAt >= :startDate', { startDate: filters.startDate });
-    }
-
-    if (filters.endDate) {
-      query.andWhere('audit.createdAt <= :endDate', { endDate: filters.endDate });
-    }
-
-    if (filters.ipAddress) {
-      query.andWhere('audit.ipAddress = :ipAddress', { ipAddress: filters.ipAddress });
-    }
-
-    return query
-      .orderBy('audit.createdAt', 'DESC')
-      .limit(limit)
-      .offset(offset)
-      .getMany();
+  ): Promise<any[]> {
+    return this.db.select().from(auditLogs).orderBy(desc(auditLogs.createdAt)).limit(limit).offset(offset);
   }
 }

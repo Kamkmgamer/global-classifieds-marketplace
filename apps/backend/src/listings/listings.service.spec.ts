@@ -1,96 +1,109 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { ListingsService } from './listings.service';
-import { Repository } from 'typeorm';
-import { Listing } from './listing.entity';
+import { ListingsCacheService } from './cache/listings-cache.service';
+import { SearchService } from './search/search.service';
+import { listings } from '../db/schema';
+import type { Drizzle } from '../db/drizzle.module';
+import { eq } from 'drizzle-orm';
 
-// Simple in-memory mocks
-const repoMock = () => ({
-  create: jest.fn(),
-  save: jest.fn(),
-  findAndCount: jest.fn(),
-});
-
-const cacheMock = () => ({
-  get: jest.fn(),
-  set: jest.fn(),
-});
-
-function makeService(mocks?: {
-  repo?: Partial<Repository<Listing>>;
-  cache?: any;
-}) {
-  const repo = (mocks?.repo || (repoMock() as any)) as Repository<Listing>;
-  const cache = (mocks?.cache || (cacheMock() as any));
-  // Bypass Nest injection by calling constructor directly
-  return new ListingsService(repo, cache);
-}
+jest.mock('../db/drizzle.module');
+jest.mock('./cache/listings-cache.service');
+jest.mock('./search/search.service');
 
 describe('ListingsService', () => {
-  beforeEach(() => {
-    jest.useFakeTimers();
-    jest.setSystemTime(new Date('2024-01-01T00:00:00Z'));
-    jest.clearAllMocks();
-  });
+  let service: ListingsService;
+  let mockCache: jest.Mocked<any>;
+  let mockCacheService: jest.Mocked<ListingsCacheService>;
+  let mockSearchService: jest.Mocked<SearchService>;
+  let mockDb: jest.Mocked<any>;
 
-  it('create() should create and save a listing', async () => {
-    const repo = repoMock();
-    const cache = cacheMock();
-    const svc = makeService({ repo: repo as any, cache });
-
-    const dto = { title: 'Bike', price: 100 } as Partial<Listing>;
-    const entity = { id: '1', ...dto } as Listing;
-    (repo.create).mockReturnValue(entity);
-    (repo.save).mockResolvedValue(entity);
-
-    const res = await svc.create(dto);
-
-    expect(repo.create).toHaveBeenCalledWith(dto);
-    expect(repo.save).toHaveBeenCalledWith(entity);
-    expect(res).toBe(entity);
-  });
-
-  it('findAll() returns cached value when present', async () => {
-    const repo = repoMock();
-    const cache = cacheMock();
-    const svc = makeService({ repo: repo as any, cache });
-
-    const cached = { listings: [{ id: 'l1' } as Listing], total: 1 };
-    (cache.get).mockResolvedValue(cached);
-
-    const res = await svc.findAll({ limit: '12', page: '1' });
-
-    expect(cache.get).toHaveBeenCalled();
-    expect(repo.findAndCount).not.toHaveBeenCalled();
-    expect(res).toEqual(cached);
-  });
-
-  it('findAll() queries DB, caches, and returns results when cache miss', async () => {
-    const repo = repoMock();
-    const cache = cacheMock();
-    const svc = makeService({ repo: repo as any, cache });
-
-    (cache.get).mockResolvedValue(undefined);
-
-    const listings: Listing[] = [
-      { id: '1', title: 'Phone', price: 200 } as any,
-      { id: '2', title: 'TV', price: 300 } as any,
-    ];
-    (repo.findAndCount).mockResolvedValue([listings, listings.length]);
-
-    const res = await svc.findAll({ q: 'Ph', sort: 'price-asc', minPrice: '100' });
-
-    expect(repo.findAndCount).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: expect.any(Object),
-        order: { price: 'ASC' },
-        skip: 0,
-        take: 12,
+  beforeEach(async () => {
+    mockCache = { get: jest.fn(), set: jest.fn() } as any;
+    mockCacheService = { 
+      generateListingsKey: jest.fn(),
+      get: jest.fn(),
+      invalidateListingsCache: jest.fn()
+    } as any;
+    mockSearchService = { searchListings: jest.fn() } as any;
+    mockDb = {
+      insert: jest.fn().mockReturnValue({
+        values: jest.fn().mockResolvedValue([{ id: 'test-id', title: 'Test', price: 100, image: null, location: null, description: null, createdAt: new Date(), updatedAt: new Date() }])
       }),
-    );
-    expect(cache.set).toHaveBeenCalledWith(
-      expect.stringMatching(/^listings:/),
-      { listings, total: listings.length },
-      60_000,
-    );
-    expect(res).toEqual({ listings, total: listings.length });
+      select: jest.fn().mockResolvedValue([{ id: 'test-id', title: 'Test', price: 100, image: null, location: null, description: null, createdAt: new Date(), updatedAt: new Date() }]),
+      update: jest.fn().mockReturnValue({ 
+        set: jest.fn().mockReturnValue({
+          where: jest.fn().mockResolvedValue([{ id: 'test-id', title: 'Updated', price: 100, image: null, location: null, description: null, createdAt: new Date(), updatedAt: new Date() }])
+        })
+      }),
+      delete: jest.fn().mockReturnValue({ 
+        where: jest.fn().mockResolvedValue(void 0)
+      }),
+    } as any;
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        ListingsService,
+        { provide: CACHE_MANAGER, useValue: mockCache },
+        { provide: 'DRIZZLE', useValue: mockDb },
+        { provide: ListingsCacheService, useValue: mockCacheService },
+        { provide: SearchService, useValue: mockSearchService },
+      ],
+    }).compile();
+
+    service = module.get<ListingsService>(ListingsService);
+  });
+
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
+
+  describe('create()', () => {
+    it('should create and save a listing', async () => {
+      const listingData = { title: 'Test', price: 100, image: null, location: null, description: null };
+      const result = await service.create(listingData);
+
+      expect(mockDb.insert).toHaveBeenCalledWith(listings);
+      expect(mockCacheService.invalidateListingsCache).toHaveBeenCalled();
+      expect(result.id).toBe('test-id');
+    });
+  });
+
+  describe('findAll()', () => {
+    it('returns cached value when present', async () => {
+      const query = { limit: '12', page: '1' };
+      mockCacheService.generateListingsKey.mockReturnValue('key');
+      mockCacheService.get.mockResolvedValue({ listings: [], total: 0 });
+
+      const result = await service.findAll(query as any);
+
+      expect(mockCacheService.generateListingsKey).toHaveBeenCalledWith(query);
+      expect(mockCacheService.get).toHaveBeenCalled();
+      expect(result).toEqual({ listings: [], total: 0 });
+    });
+
+    it('queries DB, caches, and returns results when cache miss', async () => {
+      const query = { limit: '12', page: '1' };
+      mockCacheService.generateListingsKey.mockReturnValue('key');
+      mockCacheService.get.mockImplementation(async (key, fn) => await fn());
+
+      const result = await service.findAll(query as any);
+
+      expect(mockDb.select).toHaveBeenCalled();
+      expect(result.listings).toHaveLength(1);
+    });
+  });
+
+  describe('update()', () => {
+    it('should update a listing', async () => {
+      const id = 'test-id';
+      const updateData = { title: 'Updated' };
+      const result = await service.update(id, updateData);
+
+      expect(mockDb.update).toHaveBeenCalledWith(listings);
+      expect(mockDb.update().set).toHaveBeenCalledWith(updateData);
+      expect(mockDb.update().set().where).toHaveBeenCalledWith(eq(listings.id, id));
+      expect(result).toEqual({ id: 'test-id', title: 'Updated', price: 100, image: null, location: null, description: null, createdAt: new Date(), updatedAt: new Date() });
+    });
   });
 });

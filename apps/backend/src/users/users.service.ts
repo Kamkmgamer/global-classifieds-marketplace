@@ -1,29 +1,32 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User } from './user.entity';
+import { Injectable, Inject } from '@nestjs/common';
+import { eq } from 'drizzle-orm';
+import { users } from '../db/schema';
+import type { Drizzle } from '../db/drizzle.module';
+
+export type User = typeof users.$inferSelect;
 
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectRepository(User)
-    private usersRepository: Repository<User>,
+    @Inject('DRIZZLE') private db: Drizzle,
   ) {}
 
-  async create(user: Partial<User>): Promise<User> {
-    const newUser = this.usersRepository.create(user);
-    return this.usersRepository.save(newUser);
+  async create(userData: { email: string; password: string; role?: string }): Promise<User> {
+    const [newUser] = await this.db.insert(users).values({ ...userData, role: userData.role || 'user' }).returning();
+    return newUser;
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    return this.usersRepository.findOne({ where: { email } });
+    const [user] = await this.db.select().from(users).where(eq(users.email, email)).limit(1);
+    return user || null;
   }
 
   async findById(id: string): Promise<User | null> {
-    return this.usersRepository.findOne({ where: { id } });
+    const [user] = await this.db.select().from(users).where(eq(users.id, id)).limit(1);
+    return user || null;
   }
 
   async updatePassword(id: string, hashedPassword: string): Promise<void> {
-    await this.usersRepository.update(id, { password: hashedPassword });
+    await this.db.update(users).set({ password: hashedPassword }).where(eq(users.id, id));
   }
 }

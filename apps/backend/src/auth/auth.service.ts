@@ -185,16 +185,22 @@ export class AuthService {
       throw new UnauthorizedException('Unable to rotate refresh token');
     }
 
+    // Fetch user details
+    const user = await this.usersService.findById(tokenRecord.userId);
+    if (!user) {
+      throw new UnauthorizedException('User not found for the given token');
+    }
+
     // Generate new access token
     const payload = { 
-      email: tokenRecord.user.email, 
-      sub: tokenRecord.user.id, 
-      role: tokenRecord.user.role 
+      email: user.email, 
+      sub: user.id, 
+      role: user.role 
     };
     const accessToken = this.jwtService.sign(payload);
 
     // Log token refresh
-    await this.auditService.logTokenRefresh(tokenRecord.user.id, tokenRecord.user.email, ipAddress, deviceInfo);
+    await this.auditService.logTokenRefresh(user.id, user.email, ipAddress, deviceInfo);
 
     return {
       access_token: accessToken,

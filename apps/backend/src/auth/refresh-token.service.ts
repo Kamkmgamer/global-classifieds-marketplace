@@ -1,14 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThan } from 'typeorm';
-import { RefreshToken } from './entities/refresh-token.entity';
+import { Inject } from '@nestjs/common';
+import { eq, lt, and } from 'drizzle-orm';
+import { refreshTokens } from '../db/schema';
+import type { Drizzle } from '../db/drizzle.module';
 import { randomBytes } from 'crypto';
+
+export type RefreshToken = typeof refreshTokens.$inferSelect;
 
 @Injectable()
 export class RefreshTokenService {
   constructor(
-    @InjectRepository(RefreshToken)
-    private refreshTokenRepository: Repository<RefreshToken>,
+    @Inject('DRIZZLE') private db: Drizzle,
   ) {}
 
   async createRefreshToken(
@@ -18,73 +20,58 @@ export class RefreshTokenService {
   ): Promise<RefreshToken> {
     const token = this.generateSecureToken();
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 30); // 30 days
+    expiresAt.setDate(expiresAt.getDate() + 30);
 
-    const refreshToken = this.refreshTokenRepository.create({
+    const [refreshToken] = await this.db.insert(refreshTokens).values({
       token,
       userId,
       expiresAt,
       deviceInfo,
       ipAddress,
-    });
+    }).returning();
 
-    return this.refreshTokenRepository.save(refreshToken);
+    return refreshToken;
   }
 
   async findValidToken(token: string): Promise<RefreshToken | null> {
-    return this.refreshTokenRepository.findOne({
-      where: {
-        token,
-        revoked: false,
-        expiresAt: LessThan(new Date()),
-      },
-      relations: ['user'],
-    });
+    const now = new Date();
+    const [rt] = await this.db.select().from(refreshTokens)
+      .where(and(eq(refreshTokens.token, token), eq(refreshTokens.revoked, false), lt(refreshTokens.expiresAt, now)))
+      .limit(1);
+    return rt || null;
   }
 
   async rotateRefreshToken(oldToken: string, deviceInfo?: string, ipAddress?: string): Promise<RefreshToken | null> {
-    const existingToken = await this.refreshTokenRepository.findOne({
-      where: { token: oldToken, revoked: false },
-      relations: ['user'],
-    });
+    const now = new Date();
+    const [existingToken] = await this.db.select().from(refreshTokens)
+      .where(and(eq(refreshTokens.token, oldToken), eq(refreshTokens.revoked, false)))
+      .limit(1);
 
-    if (!existingToken || existingToken.expiresAt < new Date()) {
+    if (!existingToken || existingToken.expiresAt < now) {
       return null;
     }
 
-    // Create new token
-    const newToken = await this.createRefreshToken(
-      existingToken.userId,
-      deviceInfo,
-      ipAddress,
-    );
+    const newToken = await this.createRefreshToken(existingToken.userId, deviceInfo, ipAddress);
 
-    // Revoke old token and link to new one
-    existingToken.revoked = true;
-    existingToken.replacedBy = newToken.token;
-    await this.refreshTokenRepository.save(existingToken);
+    await this.db.update(refreshTokens).set({ 
+      revoked: true, 
+      replacedBy: newToken.token 
+    }).where(eq(refreshTokens.token, oldToken));
 
     return newToken;
   }
 
   async revokeToken(token: string): Promise<void> {
-    await this.refreshTokenRepository.update(
-      { token },
-      { revoked: true },
-    );
+    await this.db.update(refreshTokens).set({ revoked: true }).where(eq(refreshTokens.token, token));
   }
 
   async revokeAllUserTokens(userId: string): Promise<void> {
-    await this.refreshTokenRepository.update(
-      { userId, revoked: false },
-      { revoked: true },
-    );
+    await this.db.update(refreshTokens).set({ revoked: true }).where(and(eq(refreshTokens.userId, userId), eq(refreshTokens.revoked, false)));
   }
 
   async cleanupExpiredTokens(): Promise<void> {
-    await this.refreshTokenRepository.delete({
-      expiresAt: LessThan(new Date()),
-    });
+    const now = new Date();
+    await this.db.delete(refreshTokens).where(lt(refreshTokens.expiresAt, now));
   }
 
   private generateSecureToken(): string {

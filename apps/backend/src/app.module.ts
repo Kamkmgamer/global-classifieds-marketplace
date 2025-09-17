@@ -1,28 +1,26 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
-import { CacheModule } from '@nestjs/cache-manager'; // Added CacheModule
-import { TypeOrmModule } from '@nestjs/typeorm'; // Import TypeOrmModule
-import { ConfigModule, ConfigService } from '@nestjs/config'; // Import ConfigModule and ConfigService
+import { CacheModule } from '@nestjs/cache-manager';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ListingsModule } from './listings/listings.module';
-import { Listing } from './listings/listing.entity'; // Import Listing entity
-import { UsersModule } from './users/users.module'; // Import UsersModule
-import { User } from './users/user.entity'; // Import User entity
-import { AuthModule } from './auth/auth.module'; // Import AuthModule
-import * as redisStore from 'cache-manager-redis-store'; // Import redisStore
+import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
+import * as redisStore from 'cache-manager-redis-store';
 import { RateLimitGuard } from './common/guards/rate-limit.guard';
 import { HealthController } from './health.controller';
+import { DrizzleModule } from './db/drizzle.module';
 import * as Joi from 'joi';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-      isGlobal: true, // Makes ConfigModule available globally
+      isGlobal: true,
       validationSchema: Joi.object({
         NODE_ENV: Joi.string().valid('development', 'test', 'staging', 'production').default('development'),
         PORT: Joi.number().port().default(5000),
-        // Database
+        // Database - Keep but remove TYPEORM_SYNCHRONIZE
         DATABASE_URL: Joi.string().uri().optional(),
         DATABASE_HOST: Joi.string().default('db'),
         DATABASE_PORT: Joi.number().port().default(5432),
@@ -33,8 +31,6 @@ import * as Joi from 'joi';
         REDIS_URL: Joi.string().uri().optional(),
         REDIS_HOST: Joi.string().default('redis'),
         REDIS_PORT: Joi.number().port().default(6379),
-        // TypeORM
-        TYPEORM_SYNCHRONIZE: Joi.string().valid('true', 'false').default('false'),
         // Swagger
         SWAGGER_ENABLED: Joi.string().valid('true', 'false').optional(),
         // CORS
@@ -58,70 +54,22 @@ import * as Joi from 'joi';
         OTEL_EXPORTER_OTLP_HEADERS: Joi.string().optional(),
       }),
     }),
-    TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        type: 'postgres',
-        ...(function () {
-          const url = configService.get<string>('DATABASE_URL');
-          if (url) {
-            const u = new URL(url);
-            const username = u.username ? decodeURIComponent(u.username) : configService.get<string>('POSTGRES_USER', 'user');
-            const password = u.password ? decodeURIComponent(u.password) : configService.get<string>('POSTGRES_PASSWORD', 'password');
-            const database = decodeURIComponent(u.pathname.replace(/^\//, '')) || configService.get<string>('POSTGRES_DB', 'classifieds_db');
-            return {
-              host: u.hostname,
-              port: Number(u.port || 5432),
-              username,
-              password,
-              database,
-            };
-          }
-          return {
-            host: configService.get<string>('DATABASE_HOST', 'db'),
-            port: configService.get<number>('DATABASE_PORT', 5432),
-            username: configService.get<string>('POSTGRES_USER', 'user'),
-            password: configService.get<string>('POSTGRES_PASSWORD', 'password'),
-            database: configService.get<string>('POSTGRES_DB', 'classifieds_db'),
-          };
-        })(),
-        entities: [Listing, User], // Add User entity
-        // IMPORTANT: Never use synchronize in production. Enable only in development via env.
-        // Defaults: false everywhere; in non-production you MUST explicitly set TYPEORM_SYNCHRONIZE=true to enable.
-        synchronize:
-          (configService.get<string>('NODE_ENV') !== 'production') &&
-          (configService.get<string>('TYPEORM_SYNCHRONIZE', 'false').toLowerCase() === 'true'),
-        logging: false, // Disable logging SQL queries
-      }),
-      inject: [ConfigService],
-    }),
     CacheModule.registerAsync({
       // Configure CacheModule with Redis
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
         store: redisStore,
-        ...(function () {
-          const url = configService.get<string>('REDIS_URL');
-          if (url) {
-            const u = new URL(url);
-            return {
-              host: u.hostname,
-              port: Number(u.port || 6379),
-            };
-          }
-          return {
-            host: configService.get<string>('REDIS_HOST', 'redis'),
-            port: configService.get<number>('REDIS_PORT', 6379),
-          };
-        })(),
-        ttl: 300, // seconds
+        host: configService.get('REDIS_HOST', 'redis'),
+        port: configService.get('REDIS_PORT', 6379),
+        ttl: configService.get('REDIS_TTL', 600), /* 10 minutes default */
+        isGlobal: true,
       }),
       inject: [ConfigService],
-      isGlobal: true, // Make CacheModule available globally
     }),
+    DrizzleModule,
+    AuthModule,
+    UsersModule,
     ListingsModule,
-    UsersModule, // Add UsersModule
-    AuthModule, // Add AuthModule
   ],
   controllers: [AppController, HealthController],
   providers: [

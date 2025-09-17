@@ -1,10 +1,9 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { DrizzleModule } from '../db/drizzle.module';
 import { AuditService } from './audit.service';
-import { AuditLog } from './entities/audit-log.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([AuditLog])],
+  imports: [DrizzleModule],
   providers: [AuditService],
   exports: [AuditService],
 })

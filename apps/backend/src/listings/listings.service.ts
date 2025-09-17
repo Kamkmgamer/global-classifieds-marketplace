@@ -2,33 +2,27 @@ import { Injectable } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject } from '@nestjs/common';
 import type { Cache } from 'cache-manager';
-import { InjectRepository } from '@nestjs/typeorm';
-import {
-  Repository,
-  Like,
-  Between,
-  MoreThanOrEqual,
-  LessThanOrEqual,
-} from 'typeorm';
-import { Listing } from './listing.entity';
+import { ilike, and, gte, lte, between, desc, asc, sql, eq } from 'drizzle-orm';
+import { listings } from '../db/schema';
+import type { Drizzle } from '../db/drizzle.module';
 import { ListingsCacheService } from './cache/listings-cache.service';
 import { SearchService } from './search/search.service';
+
+export type Listing = typeof listings.$inferSelect;
 
 @Injectable()
 export class ListingsService {
   constructor(
-    @InjectRepository(Listing)
-    private listingRepository: Repository<Listing>,
+    @Inject('DRIZZLE') private db: Drizzle,
     @Inject(CACHE_MANAGER) private cache: Cache,
     private listingsCacheService: ListingsCacheService,
     private searchService: SearchService,
   ) {}
 
-  async create(listing: Partial<Listing>): Promise<Listing> {
-    const newListing = this.listingRepository.create(listing);
-    const savedListing = await this.listingRepository.save(newListing);
+  async create(listingData: Omit<Listing, 'id' | 'createdAt' | 'updatedAt'>): Promise<Listing> {
+    const [savedListing] = await this.db.insert(listings).values(listingData).returning();
     
-    // Invalidate listings cache when new listing is created
+    // Invalidate listings cache
     await this.listingsCacheService.invalidateListingsCache();
     
     return savedListing;
@@ -49,81 +43,59 @@ export class ListingsService {
       cacheKey,
       () => this.fetchListingsFromDatabase(query),
       {
-        ttl: 5 * 60 * 1000, // 5 minutes total TTL
-        staleTtl: 2 * 60 * 1000, // Serve stale for 3 minutes
-        warmupThreshold: 30 * 1000, // Background refresh 30s before stale
+        ttl: 5 * 60 * 1000,
+        staleTtl: 2 * 60 * 1000,
+        warmupThreshold: 30 * 1000,
       },
     );
   }
 
-  private async fetchListingsFromDatabase(query: {
-    limit?: string;
-    page?: string;
-    q?: string;
-    minPrice?: string;
-    maxPrice?: string;
-    location?: string;
-    sort?: string;
-  }): Promise<{ listings: Listing[]; total: number }> {
+  private async fetchListingsFromDatabase(query: any): Promise<{ listings: Listing[]; total: number }> {
     const limit = Number.parseInt(query.limit || '12', 10);
     const page = Number.parseInt(query.page || '1', 10);
-    const skip = (page - 1) * limit;
+    const offset = (page - 1) * limit;
 
-    const where: any = {};
-    let order: { [key: string]: 'ASC' | 'DESC' } = {};
+    let whereConditions: any[] = [];
+    let orderBy: any[] = [desc(listings.createdAt)];
 
     if (query.q) {
-      where.title = Like(`%${query.q}%`);
+      whereConditions.push(ilike(listings.title, `%${query.q}%`));
     }
 
     if (query.minPrice && query.maxPrice) {
-      where.price = Between(
-        Number.parseInt(query.minPrice, 10),
-        Number.parseInt(query.maxPrice, 10),
-      );
+      whereConditions.push(between(listings.price, Number.parseInt(query.minPrice, 10), Number.parseInt(query.maxPrice, 10)));
     } else if (query.minPrice) {
-      where.price = MoreThanOrEqual(Number.parseInt(query.minPrice, 10));
+      whereConditions.push(gte(listings.price, Number.parseInt(query.minPrice, 10)));
     } else if (query.maxPrice) {
-      where.price = LessThanOrEqual(Number.parseInt(query.maxPrice, 10));
+      whereConditions.push(lte(listings.price, Number.parseInt(query.maxPrice, 10)));
     }
 
     if (query.location && query.location !== 'any-location') {
-      where.location = query.location;
+      whereConditions.push(ilike(listings.location, `%${query.location}%`));
     }
 
     if (query.sort === 'price-asc') {
-      order = { price: 'ASC' };
+      orderBy = [asc(listings.price)];
     } else if (query.sort === 'price-desc') {
-      order = { price: 'DESC' };
-    } else {
-      order = { createdAt: 'DESC' };
+      orderBy = [desc(listings.price)];
     }
 
-    const [listings, total] = await this.listingRepository.findAndCount({
-      where,
-      order,
-      skip,
-      take: limit,
-    });
+    const where = whereConditions.length > 0 ? and(...whereConditions) : undefined;
 
-    return { listings, total };
+    const listingsResult = await this.db.select().from(listings).where(where).orderBy(...orderBy).limit(limit).offset(offset);
+    const totalResult = await this.db.select({ count: sql`count(*)` }).from(listings).where(where);
+
+    return { listings: listingsResult, total: Number(totalResult[0]?.count || 0) };
   }
 
   async update(id: string, updateData: Partial<Listing>): Promise<Listing | null> {
-    await this.listingRepository.update(id, updateData);
-    const updatedListing = await this.listingRepository.findOne({ where: { id } });
-    
-    // Invalidate cache when listing is updated
-    await this.listingsCacheService.invalidateListing(id);
-    
-    return updatedListing;
+    const [updated] = await this.db.update(listings).set(updateData).where(eq(listings.id, id)).returning();
+    return updated || null;
   }
 
   async delete(id: string): Promise<void> {
-    await this.listingRepository.delete(id);
-    
-    // Invalidate cache when listing is deleted
-    await this.listingsCacheService.invalidateListing(id);
+    await this.db.delete(listings).where(eq(listings.id, id));
+    await this.listingsCacheService.invalidateListingsCache();
   }
 
   async search(query: {
@@ -184,7 +156,10 @@ export class ListingsService {
     
     return this.listingsCacheService.get(
       cacheKey,
-      () => this.listingRepository.findOne({ where: { id } }),
+      async () => {
+        const results = await this.db.select().from(listings).where(eq(listings.id, id)).limit(1);
+        return results[0] || null;
+      },
       {
         ttl: 10 * 60 * 1000, // 10 minutes for individual listings
         staleTtl: 5 * 60 * 1000,

@@ -9,13 +9,12 @@ import { JwtStrategy } from './jwt.strategy';
 import { LocalStrategy } from './local.strategy';
 import { PasswordService } from './password.service';
 import { RefreshTokenService } from './refresh-token.service';
-import { RefreshToken } from './entities/refresh-token.entity';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuditModule } from '../audit/audit.module';
+import { DrizzleModule } from '../db/drizzle.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([RefreshToken]),
+    DrizzleModule,
     UsersModule,
     PassportModule,
     AuditModule,

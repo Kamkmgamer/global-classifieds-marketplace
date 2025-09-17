@@ -8,9 +8,9 @@ An enterprise-grade classifieds marketplace application built with a modern mono
 
 This project has been elevated to an enterprise-grade standard with the following key features:
 
-### Backend (NestJS, TypeScript, TypeORM, PostgreSQL, Redis)
+### Backend (NestJS, TypeScript, Drizzle ORM, PostgreSQL, Redis)
 - **Robust API:** Built with NestJS, providing a modular, scalable, and maintainable backend.
-- **Database Integration:** Persistent data storage using PostgreSQL with TypeORM for efficient and type-safe database interactions.
+- **Database Integration:** Persistent data storage using PostgreSQL with Drizzle ORM for efficient and type-safe database interactions.
 - **Authentication & Authorization:** Secure JWT-based authentication system with user registration, login, and role-based access control (RBAC) for protected endpoints.
 - **Centralized Error Handling:** Global exception filters for consistent and informative error responses.
 - **Security Headers:** Helmet middleware enables COOP/CORP, Referrer Policy and other best-practice headers by default (frontend enforces CSP).
@@ -36,7 +36,7 @@ This project has been elevated to an enterprise-grade standard with the followin
     - **Framework:** NestJS
     - **Language:** TypeScript
     - **Database:** PostgreSQL
-    - **ORM:** TypeORM
+    - **ORM:** Drizzle ORM
     - **Caching:** Redis (via `cache-manager-redis-store`)
     - **Authentication:** Passport.js, JWT, bcrypt
     - **Validation:** class-validator
@@ -53,16 +53,21 @@ This project has been elevated to an enterprise-grade standard with the followin
 
 - Node.js 20.x LTS (recommended)
 - pnpm 9.x or later
-- Docker & Docker Compose (for local development environment with PostgreSQL and Redis)
+- PostgreSQL 15+ and Redis 7+ (install locally or use Docker if preferred)
 - Git
+
+For local development without Docker:
+- Install PostgreSQL: Download from official site, create database 'classifieds_db' with user 'user' password 'password'
+- Install Redis: Download and run Redis server
+- Update .env files with local host: DATABASE_HOST=localhost, REDIS_HOST=localhost
 
 Check versions:
 
 ```bash
 node -v
 pnpm -v
-docker -v
-docker compose version
+psql --version
+redis-server --version
 ```
 
 ---
@@ -82,29 +87,31 @@ docker compose version
     *If prompted by pnpm to approve build scripts (e.g., for `@nestjs/core`, `sharp`), select them all and press Enter.*
 
 3.  **Set up environment variables:**
-    - Create `apps/backend/.env` with the following content (or adjust as needed):
+    - Create `apps/backend/.env`:
         ```
-        # apps/backend/.env
         PORT=5000
-        DATABASE_URL=postgresql://user:password@db:5432/classifieds_db
-        REDIS_URL=redis://redis:6379
-        JWT_SECRET=your_super_secret_jwt_key_here # **CHANGE THIS IN PRODUCTION**
+        DATABASE_URL=postgresql://user:password@localhost:5432/classifieds_db
+        REDIS_URL=redis://localhost:6379
+        JWT_SECRET=your_super_secret_jwt_key_here
         ```
-    - Create `apps/frontend/.env.local` with the following content:
+    - Create `apps/frontend/.env.local`:
         ```
-        # apps/frontend/.env.local
         NEXT_PUBLIC_BACKEND_URL=http://localhost:5000
         NEXT_PUBLIC_SITE_URL=http://localhost:3000
         ```
 
-4.  **Start the development environment with Docker Compose:**
-    This will spin up PostgreSQL, Redis, the NestJS backend, and the Next.js frontend.
-    ```bash
-    docker compose up --build
-    ```
-    *Ensure Docker Desktop is running if you are on Windows/macOS.*
+4.  **Start PostgreSQL and Redis locally** (ensure services are running)
 
-5.  **Access the application:**
+5.  **Start the development servers:**
+    ```bash
+    # Backend
+    pnpm --filter backend run start:dev
+
+    # Frontend (in another terminal)
+    pnpm --filter frontend run dev
+    ```
+
+6.  **Access the application:**
     - Frontend: `http://localhost:3000`
     - Backend API: `http://localhost:5000` (e.g., `http://localhost:5000/listings`)
 
@@ -157,44 +164,35 @@ pnpm --filter backend test:e2e
 
 ---
 
-## Database Schema Management (TypeORM Migrations)
+## Database Schema Management (Drizzle Migrations)
 
-Production deployments must not use `synchronize: true`. This project is configured to:
-
-- Disable TypeORM schema sync in production (hard off).
-- Default `synchronize` to off in non‑production; opt‑in by setting `TYPEORM_SYNCHRONIZE=true` locally when needed.
-- Use migrations for schema changes.
+Production deployments must not use schema sync. This project uses Drizzle migrations for schema changes.
 
 Backend changes:
 
-- Config is in `apps/backend/src/app.module.ts` (env-driven `synchronize`).
-- TypeORM DataSource for CLI is `apps/backend/ormconfig.ts`.
-- Migration scripts are available in `apps/backend/package.json`.
-
-Common commands (run from repo root):
+- Schema is in `apps/backend/src/db/schema.ts`.
+- Migrations are in `apps/backend/drizzle/`.
+- Common commands (run from repo root):
 
 ```bash
-# Generate a migration from current entity changes
+# Generate migration from schema changes
 pnpm --filter backend run migration:generate
 
-# Create an empty migration (name "ManualMigration")
-pnpm --filter backend run migration:create
+# Push schema directly (dev only)
+pnpm --filter backend run migration:push
 
-# Run migrations
-pnpm --filter backend run migration:run
-
-# Revert last migration
-pnpm --filter backend run migration:revert
+# Apply migrations (if using SQL files)
+# Use external tool or manual SQL execution
 ```
 
 Environment:
 
-- Local dev: you may set `TYPEORM_SYNCHRONIZE=true` to ease local iteration (not recommended for shared environments).
-- Staging/Prod: ensure `TYPEORM_SYNCHRONIZE=false` and run migrations during deployment.
+- Local dev: Use `migration:push` for quick iteration.
+- Staging/Prod: Generate SQL migrations and apply during deployment.
 
 CI/CD Guidance:
 
-- Add a deploy step to run `migration:run` against the target environment/database.
+- Add a deploy step to apply migrations against the target environment/database.
 
 ---
 

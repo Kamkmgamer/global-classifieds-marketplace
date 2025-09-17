@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Listing } from '../listing.entity';
+import { Injectable, Inject } from '@nestjs/common';
+import { sql, and, ilike, desc } from 'drizzle-orm';
+import { listings } from '../../db/schema';
+import type { Drizzle } from '../../db/drizzle.module';
+import type { Listing } from '../listings.service';
 
 export interface SearchQuery {
   q?: string;
@@ -23,117 +24,53 @@ export interface SearchResult {
 @Injectable()
 export class SearchService {
   constructor(
-    @InjectRepository(Listing)
-    private listingRepository: Repository<Listing>,
+    @Inject('DRIZZLE') private db: Drizzle,
   ) {}
 
   async search(query: SearchQuery): Promise<SearchResult> {
     const startTime = Date.now();
     const { q, location, minPrice, maxPrice, limit = 12, offset = 0, sort = 'relevance' } = query;
 
-    let sqlQuery = this.listingRepository.createQueryBuilder('listing');
-    const whereConditions: string[] = [];
-    const parameters: Record<string, any> = {};
+    // Full-text search using tsvector (assumes search_vector column exists)
+    const searchQuery = `%${q}%`;
+    const whereConditions = [sql`to_tsvector('english', coalesce(title, '') || ' ' || coalesce(description, '')) @@ to_tsquery('english', ${searchQuery})`];
 
-    // Full-text search with ranking
-    if (q && q.trim()) {
-      const searchTerm = q.trim();
-      
-      // Use full-text search with ranking
-      sqlQuery = sqlQuery.addSelect(
-        `ts_rank(listing.search_vector, plainto_tsquery('english', :searchTerm))`,
-        'search_rank'
-      );
-      
-      whereConditions.push(`listing.search_vector @@ plainto_tsquery('english', :searchTerm)`);
-      parameters.searchTerm = searchTerm;
+    if (minPrice) {
+      whereConditions.push(sql`price >= ${minPrice}`);
+    }
+    if (maxPrice) {
+      whereConditions.push(sql`price <= ${maxPrice}`);
+    }
+    if (location) {
+      whereConditions.push(ilike(listings.location, `%${location}%`));
     }
 
-    // Location filter with trigram similarity for fuzzy matching
-    if (location && location !== 'any-location') {
-      if (location.length > 2) {
-        // Use trigram similarity for fuzzy location matching
-        whereConditions.push(`(listing.location = :exactLocation OR similarity(listing.location, :location) > 0.3)`);
-        parameters.exactLocation = location;
-        parameters.location = location;
-      } else {
-        whereConditions.push(`listing.location = :location`);
-        parameters.location = location;
-      }
-    }
+    const results = await this.db.select().from(listings)
+      .where(and(...whereConditions))
+      .orderBy(sql`ts_rank(to_tsvector('english', coalesce(title, '') || ' ' || coalesce(description, '')), to_tsquery('english', ${searchQuery})) DESC`)
+      .limit(limit)
+      .offset(offset);
 
-    // Price range filters
-    if (minPrice !== undefined) {
-      whereConditions.push(`listing.price >= :minPrice`);
-      parameters.minPrice = minPrice;
-    }
-
-    if (maxPrice !== undefined) {
-      whereConditions.push(`listing.price <= :maxPrice`);
-      parameters.maxPrice = maxPrice;
-    }
-
-    // Apply WHERE conditions
-    if (whereConditions.length > 0) {
-      sqlQuery = sqlQuery.where(whereConditions.join(' AND '), parameters);
-    }
-
-    // Apply sorting
-    switch (sort) {
-      case 'relevance':
-        if (q && q.trim()) {
-          sqlQuery = sqlQuery.orderBy('search_rank', 'DESC');
-        } else {
-          sqlQuery = sqlQuery.orderBy('listing.createdAt', 'DESC');
-        }
-        break;
-      case 'price-asc':
-        sqlQuery = sqlQuery.orderBy('listing.price', 'ASC');
-        break;
-      case 'price-desc':
-        sqlQuery = sqlQuery.orderBy('listing.price', 'DESC');
-        break;
-      case 'newest':
-        sqlQuery = sqlQuery.orderBy('listing.createdAt', 'DESC');
-        break;
-      case 'oldest':
-        sqlQuery = sqlQuery.orderBy('listing.createdAt', 'ASC');
-        break;
-    }
-
-    // Add secondary sort for consistency
-    if (sort !== 'newest' && sort !== 'oldest') {
-      sqlQuery = sqlQuery.addOrderBy('listing.createdAt', 'DESC');
-    }
-
-    // Get total count
-    const totalQuery = sqlQuery.clone();
-    const total = await totalQuery.getCount();
-
-    // Apply pagination
-    const listings = await sqlQuery
-      .skip(offset)
-      .take(limit)
-      .getMany();
+    const total = await this.db.select({ count: sql`count(*)` }).from(listings).where(and(...whereConditions));
 
     const searchTime = Date.now() - startTime;
 
     // Generate search suggestions if no results found
     let suggestions: string[] | undefined;
-    if (listings.length === 0 && q && q.trim()) {
+    if (results.length === 0 && q && q.trim()) {
       suggestions = await this.generateSearchSuggestions(q.trim());
     }
 
     return {
-      listings,
-      total,
+      listings: results,
+      total: Number(total[0]?.count || 0),
       searchTime,
       suggestions,
     };
   }
 
   async searchSimilar(listingId: string, limit = 5): Promise<Listing[]> {
-    const listing = await this.listingRepository.findOne({ where: { id: listingId } });
+    const [listing] = await this.db.select().from(listings).where(sql`id = ${listingId}`).limit(1);
     if (!listing) {
       return [];
     }
@@ -143,17 +80,16 @@ export class SearchService {
     const minPrice = Math.max(0, listing.price - priceRange);
     const maxPrice = listing.price + priceRange;
 
-    return this.listingRepository
-      .createQueryBuilder('listing')
-      .where('listing.id != :id', { id: listingId })
-      .andWhere('listing.price BETWEEN :minPrice AND :maxPrice', { minPrice, maxPrice })
-      .andWhere(`similarity(listing.title, :title) > 0.2`, { title: listing.title })
-      .orderBy(`similarity(listing.title, :title)`, 'DESC')
-      .addOrderBy('ABS(listing.price - :price)', 'ASC')
-      .setParameter('title', listing.title)
-      .setParameter('price', listing.price)
-      .limit(limit)
-      .getMany();
+    const similarListings = await this.db.select().from(listings)
+      .where(and(
+        sql`id != ${listingId}`,
+        sql`price BETWEEN ${minPrice} AND ${maxPrice}`,
+        sql`similarity(title, ${listing.title}) > 0.2`,
+      ))
+      .orderBy(sql`similarity(title, ${listing.title}) DESC`, sql`ABS(price - ${listing.price}) ASC`)
+      .limit(limit);
+
+    return similarListings;
   }
 
   async getSearchSuggestions(query: string, limit = 5): Promise<string[]> {
@@ -162,13 +98,10 @@ export class SearchService {
     }
 
     // Get suggestions based on existing titles and locations
-    const titleSuggestions = await this.listingRepository
-      .createQueryBuilder('listing')
-      .select('DISTINCT listing.title', 'title')
-      .where(`similarity(listing.title, :query) > 0.3`, { query })
-      .orderBy(`similarity(listing.title, :query)`, 'DESC')
-      .limit(limit)
-      .getRawMany();
+    const titleSuggestions = await this.db.selectDistinct({ title: listings.title }).from(listings)
+      .where(sql`similarity(title, ${query}) > 0.3`)
+      .orderBy(sql`similarity(title, ${query}) DESC`)
+      .limit(limit);
 
     return titleSuggestions.map(item => item.title).slice(0, limit);
   }
@@ -187,12 +120,9 @@ export class SearchService {
 
   private async getPopularSearchTerms(): Promise<string[]> {
     // Get most common words from titles
-    const popularTerms = await this.listingRepository
-      .createQueryBuilder('listing')
-      .select('listing.title')
-      .orderBy('listing.createdAt', 'DESC')
-      .limit(100)
-      .getMany();
+    const popularTerms = await this.db.select({ title: listings.title }).from(listings)
+      .orderBy(desc(listings.createdAt))
+      .limit(100);
 
     // Extract common words (simplified approach)
     const words = popularTerms
@@ -204,7 +134,7 @@ export class SearchService {
       }, {} as Record<string, number>);
 
     return Object.entries(words)
-      .sort(([, a], [, b]) => b - a)
+      .sort(([, a]: [string, number], [, b]: [string, number]) => b - a)
       .slice(0, 5)
       .map(([word]) => word);
   }
@@ -214,22 +144,21 @@ export class SearchService {
     avgSearchTime: number;
     popularLocations: string[];
   }> {
-    const totalListings = await this.listingRepository.count();
+    const [total] = await this.db.select({ count: sql`count(*)` }).from(listings);
     
-    const popularLocations = await this.listingRepository
-      .createQueryBuilder('listing')
-      .select('listing.location', 'location')
-      .addSelect('COUNT(*)', 'count')
-      .where('listing.location IS NOT NULL')
-      .groupBy('listing.location')
-      .orderBy('COUNT(*)', 'DESC')
-      .limit(10)
-      .getRawMany();
+    const popularLocations = await this.db.select({ 
+        location: listings.location, 
+        count: sql`count(*)`
+      }).from(listings)
+      .where(sql`location IS NOT NULL`)
+      .groupBy(listings.location)
+      .orderBy(sql`count(*) DESC`)
+      .limit(10);
 
     return {
-      totalListings,
+      totalListings: Number(total.count),
       avgSearchTime: 0, // Would need to track this over time
-      popularLocations: popularLocations.map(item => item.location),
+      popularLocations: popularLocations.map(item => item.location as string),
     };
   }
 }
