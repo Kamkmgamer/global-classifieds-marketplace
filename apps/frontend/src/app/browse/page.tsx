@@ -1,4 +1,4 @@
-import BrowseClientPage from "./BrowseClientPage";
+import BrowseClientPage from './BrowseClientPage';
 
 export default function BrowsePage() {
   return <BrowseClientPage />;

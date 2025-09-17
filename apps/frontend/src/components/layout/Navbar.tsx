@@ -1,18 +1,24 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
-import { Menu as MenuIcon, X as XIcon } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth"; // Import useAuth
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetTitle,
+  SheetDescription,
+} from '@/components/ui/sheet';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { Menu as MenuIcon, X as XIcon } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth'; // Import useAuth
 
 const navLinks = [
-  { href: "/browse", label: "Browse" },
-  { href: "/post", label: "Post" },
-  { href: "/about", label: "About" },
+  { href: '/browse', label: 'Browse' },
+  { href: '/post', label: 'Post' },
+  { href: '/about', label: 'About' },
 ];
 
 export function Navbar() {
@@ -23,10 +29,13 @@ export function Navbar() {
   const closeSheet = () => setSheetOpen(false);
 
   return (
-    <header className="sticky top-0 z-40 glass">
+    <header className="glass sticky top-0 z-40">
       <div className="container-prose">
         <nav className="flex h-16 items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 font-semibold hover:opacity-90 transition-opacity">
+          <Link
+            href="/"
+            className="flex items-center gap-2 font-semibold transition-opacity hover:opacity-90"
+          >
             <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-sm-soft">
               G
             </span>
@@ -38,9 +47,9 @@ export function Navbar() {
                 key={href}
                 href={href}
                 className={`relative text-sm font-medium transition-colors hover:text-primary ${
-                  pathname === href ? "text-primary" : "text-muted-foreground"
+                  pathname === href ? 'text-primary' : 'text-muted-foreground'
                 } after:absolute after:-bottom-2 after:left-0 after:h-0.5 after:w-full after:scale-x-0 after:bg-primary after:transition-transform after:duration-200 hover:after:scale-x-100 ${
-                  pathname === href ? "after:scale-x-100" : ""
+                  pathname === href ? 'after:scale-x-100' : ''
                 }`}
               >
                 {label}
@@ -48,7 +57,10 @@ export function Navbar() {
             ))}
             {isAuthenticated ? (
               <>
-                <Button asChild className="shadow-sm-soft hover:shadow-md-soft active:translate-y-[1px]">
+                <Button
+                  asChild
+                  className="shadow-sm-soft hover:shadow-md-soft active:translate-y-[1px]"
+                >
                   <Link href="/post">Post an Ad</Link>
                 </Button>
                 <Button variant="outline" onClick={logout} className="hover:bg-accent/10">
@@ -60,7 +72,10 @@ export function Navbar() {
                 <Button asChild variant="outline" className="hover:bg-accent/10">
                   <Link href="/login">Login</Link>
                 </Button>
-                <Button asChild className="shadow-sm-soft hover:shadow-md-soft active:translate-y-[1px]">
+                <Button
+                  asChild
+                  className="shadow-sm-soft hover:shadow-md-soft active:translate-y-[1px]"
+                >
                   <Link href="/register">Register</Link>
                 </Button>
               </>
@@ -89,7 +104,11 @@ export function Navbar() {
                 </SheetDescription>
                 <div className="flex h-full flex-col">
                   <div className="flex items-center justify-between border-b pb-4">
-                    <Link href="/" className="flex items-center gap-2 font-semibold" onClick={closeSheet}>
+                    <Link
+                      href="/"
+                      className="flex items-center gap-2 font-semibold"
+                      onClick={closeSheet}
+                    >
                       <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-sm-soft">
                         G
                       </span>
@@ -104,9 +123,7 @@ export function Navbar() {
                         href={href}
                         onClick={closeSheet}
                         className={`text-lg font-medium transition-colors hover:text-primary ${
-                          pathname === href
-                            ? "text-primary"
-                            : "text-foreground"
+                          pathname === href ? 'text-primary' : 'text-foreground'
                         }`}
                       >
                         {label}
@@ -114,19 +131,39 @@ export function Navbar() {
                     ))}
                     {isAuthenticated ? (
                       <>
-                        <Button asChild className="w-full shadow-sm-soft hover:shadow-md-soft active:translate-y-[1px]" onClick={closeSheet}>
+                        <Button
+                          asChild
+                          className="w-full shadow-sm-soft hover:shadow-md-soft active:translate-y-[1px]"
+                          onClick={closeSheet}
+                        >
                           <Link href="/post">Post an Ad</Link>
                         </Button>
-                        <Button variant="outline" className="w-full hover:bg-accent/10" onClick={() => { logout(); closeSheet(); }}>
+                        <Button
+                          variant="outline"
+                          className="w-full hover:bg-accent/10"
+                          onClick={() => {
+                            logout();
+                            closeSheet();
+                          }}
+                        >
                           Logout
                         </Button>
                       </>
                     ) : (
                       <>
-                        <Button asChild variant="outline" className="w-full hover:bg-accent/10" onClick={closeSheet}>
+                        <Button
+                          asChild
+                          variant="outline"
+                          className="w-full hover:bg-accent/10"
+                          onClick={closeSheet}
+                        >
                           <Link href="/login">Login</Link>
                         </Button>
-                        <Button asChild className="w-full shadow-sm-soft hover:shadow-md-soft active:translate-y-[1px]" onClick={closeSheet}>
+                        <Button
+                          asChild
+                          className="w-full shadow-sm-soft hover:shadow-md-soft active:translate-y-[1px]"
+                          onClick={closeSheet}
+                        >
                           <Link href="/register">Register</Link>
                         </Button>
                       </>

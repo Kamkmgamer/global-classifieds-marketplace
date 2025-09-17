@@ -16,9 +16,5 @@
     "src/**/__tests__/**/*.*",
     "src/test/jest-globals.d.ts"
   ],
-  "exclude": [
-    "node_modules",
-    ".next",
-    "dist"
-  ]
+  "exclude": ["node_modules", ".next", "dist"]
 }

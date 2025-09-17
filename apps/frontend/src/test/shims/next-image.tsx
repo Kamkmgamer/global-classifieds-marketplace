@@ -8,5 +8,7 @@ interface NextImageProps {
   [key: string]: unknown;
 }
 
-const NextImage = ({ src, alt = '', ...props }: NextImageProps) => <img src={typeof src === 'string' ? src : ''} alt={alt} {...props} />;
+const NextImage = ({ src, alt = '', ...props }: NextImageProps) => (
+  <img src={typeof src === 'string' ? src : ''} alt={alt} {...props} />
+);
 export default NextImage;

@@ -1,10 +1,5 @@
-import Image from "next/image";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import Image from 'next/image';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export type Listing = {
   id: string;
@@ -31,18 +26,12 @@ export default function ListingCard({ listing }: { listing: Listing }) {
       <CardContent>
         <div className="flex items-start justify-between gap-3">
           <div>
-            <CardTitle className="line-clamp-1 font-medium">
-              {listing.title}
-            </CardTitle>
+            <CardTitle className="line-clamp-1 font-medium">{listing.title}</CardTitle>
             {listing.location && (
-              <div className="mt-0.5 text-xs text-muted-foreground">
-                {listing.location}
-              </div>
+              <div className="mt-0.5 text-xs text-muted-foreground">{listing.location}</div>
             )}
           </div>
-          <div className="shrink-0 font-semibold">
-            ${listing.price.toLocaleString()}
-          </div>
+          <div className="shrink-0 font-semibold">${listing.price.toLocaleString()}</div>
         </div>
       </CardContent>
     </Card>

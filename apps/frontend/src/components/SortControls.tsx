@@ -1,34 +1,34 @@
-"use client";
+'use client';
 
-import { useRouter, useSearchParams } from "next/navigation";
-import * as React from "react";
+import { useRouter, useSearchParams } from 'next/navigation';
+import * as React from 'react';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 
 const SORT_OPTIONS = [
-  { value: "default", label: "Relevance" },
-  { value: "price_asc", label: "Price: Low to High" },
-  { value: "price_desc", label: "Price: High to Low" },
+  { value: 'default', label: 'Relevance' },
+  { value: 'price_asc', label: 'Price: Low to High' },
+  { value: 'price_desc', label: 'Price: High to Low' },
 ];
 
 export default function SortControls({ className }: { className?: string }) {
   const router = useRouter();
   const params = useSearchParams();
 
-  const sort = params.get("sort") || "default";
-  const pageSize = params.get("pageSize") || "12";
+  const sort = params.get('sort') || 'default';
+  const pageSize = params.get('pageSize') || '12';
 
-  const onChange = (key: "sort" | "pageSize", value: string) => {
+  const onChange = (key: 'sort' | 'pageSize', value: string) => {
     const usp = new URLSearchParams(Array.from(params.entries()));
-    if (value && value !== "default") usp.set(key, value);
+    if (value && value !== 'default') usp.set(key, value);
     else usp.delete(key);
     // Reset to page 1 when changing sort or pageSize
-    usp.set("page", "1");
+    usp.set('page', '1');
     router.push(`/browse?${usp.toString()}`);
   };
 
@@ -36,7 +36,7 @@ export default function SortControls({ className }: { className?: string }) {
     <div className={className}>
       <div className="flex flex-wrap items-center gap-3">
         <label className="text-sm text-muted-foreground">Sort</label>
-        <Select value={sort} onValueChange={(value) => onChange("sort", value)}>
+        <Select value={sort} onValueChange={(value) => onChange('sort', value)}>
           <SelectTrigger id="sort" className="h-10 w-[180px]">
             <SelectValue placeholder="Sort by" />
           </SelectTrigger>
@@ -50,10 +50,7 @@ export default function SortControls({ className }: { className?: string }) {
         </Select>
         <div className="ml-4 h-4 w-px bg-border" />
         <label className="text-sm text-muted-foreground">Per page</label>
-        <Select
-          value={pageSize}
-          onValueChange={(value) => onChange("pageSize", value)}
-        >
+        <Select value={pageSize} onValueChange={(value) => onChange('pageSize', value)}>
           <SelectTrigger id="pageSize" className="h-10 w-[100px]">
             <SelectValue placeholder="Per page" />
           </SelectTrigger>

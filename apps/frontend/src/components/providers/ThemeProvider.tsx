@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import type { PropsWithChildren } from "react";
-import { ThemeProvider as NextThemesProvider } from "next-themes";
+import type { PropsWithChildren } from 'react';
+import { ThemeProvider as NextThemesProvider } from 'next-themes';
 
 // Loosen typing to avoid IDE React namespace issues while keeping runtime behavior correct
 export function ThemeProvider(props: PropsWithChildren) {

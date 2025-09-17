@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 // Listing domain model
 export const ListingSchema = z.object({

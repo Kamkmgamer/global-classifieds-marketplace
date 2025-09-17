@@ -27,8 +27,21 @@ async function fetchListings(limit: number = 6) {
   try {
     const data = await api.get<
       typeof ListingsResponseSchema,
-      { listings: Array<{ id: string; title: string; price: number; image: string; location?: string }> }
-    >(`/listings?limit=${limit}`, { cache: 'no-store', schema: ListingsResponseSchema, retries: 2, timeoutMs: 8000 });
+      {
+        listings: Array<{
+          id: string;
+          title: string;
+          price: number;
+          image: string;
+          location?: string;
+        }>;
+      }
+    >(`/listings?limit=${limit}`, {
+      cache: 'no-store',
+      schema: ListingsResponseSchema,
+      retries: 2,
+      timeoutMs: 8000,
+    });
     return data.listings;
   } catch (err) {
     // Avoid noisy stack traces when backend is down; show concise warning and use mock data
@@ -39,29 +52,30 @@ async function fetchListings(limit: number = 6) {
 }
 
 const popularCategories = [
-  { name: "Electronics", icon: "⚡️" },
-  { name: "Vehicles", icon: "🚗" },
-  { name: "Home & Garden", icon: "🏡" },
-  { name: "Fashion", icon: "👕" },
-  { name: "Sports", icon: "⚽️" },
-  { name: "Books", icon: "📚" },
+  { name: 'Electronics', icon: '⚡️' },
+  { name: 'Vehicles', icon: '🚗' },
+  { name: 'Home & Garden', icon: '🏡' },
+  { name: 'Fashion', icon: '👕' },
+  { name: 'Sports', icon: '⚽️' },
+  { name: 'Books', icon: '📚' },
 ];
 
 const testimonials = [
   {
-    quote: "This marketplace is a game-changer! I sold my old bike in less than 24 hours.",
-    author: "John Doe",
-    title: "Happy Seller",
+    quote: 'This marketplace is a game-changer! I sold my old bike in less than 24 hours.',
+    author: 'John Doe',
+    title: 'Happy Seller',
   },
   {
-    quote: "Finding exactly what I needed was so easy. The chat feature made communication a breeze.",
-    author: "Jane Smith",
-    title: "Satisfied Buyer",
+    quote:
+      'Finding exactly what I needed was so easy. The chat feature made communication a breeze.',
+    author: 'Jane Smith',
+    title: 'Satisfied Buyer',
   },
   {
-    quote: "Secure and user-friendly. I highly recommend Global Classifieds to everyone!",
-    author: "Peter Jones",
-    title: "Trusted User",
+    quote: 'Secure and user-friendly. I highly recommend Global Classifieds to everyone!',
+    author: 'Peter Jones',
+    title: 'Trusted User',
   },
 ];
 
@@ -106,7 +120,8 @@ export default async function Home() {
                 Buy. Sell. Chat. Anywhere.
               </h1>
               <p className="mt-4 text-balance text-lg text-muted-foreground">
-                The modern marketplace for everything. Post listings in seconds, discover deals nearby or worldwide, and chat securely to close the sale.
+                The modern marketplace for everything. Post listings in seconds, discover deals
+                nearby or worldwide, and chat securely to close the sale.
               </p>
               <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                 <Button asChild size="lg">
@@ -127,17 +142,21 @@ export default async function Home() {
               <div className="rounded-xl border border-border bg-white p-4 shadow-sm dark:bg-neutral-900">
                 <div className="grid grid-cols-3 gap-3">
                   {/* Display featured listings */}
-                  {featuredListings.length > 0 ? (
-                    featuredListings.map((listing) => (
-                      <ListingCard key={listing.id} listing={listing} />
-                    ))
-                  ) : (
-                    Array.from({ length: 6 }).map((_, i) => (
-                      <div key={i} className="aspect-square overflow-hidden rounded-lg bg-muted">
-                        <Image src={`/placeholder-${(i % 3) + 1}.svg`} alt="Listing" width={200} height={200} className="size-full object-cover" />
-                      </div>
-                    ))
-                  )}
+                  {featuredListings.length > 0
+                    ? featuredListings.map((listing) => (
+                        <ListingCard key={listing.id} listing={listing} />
+                      ))
+                    : Array.from({ length: 6 }).map((_, i) => (
+                        <div key={i} className="aspect-square overflow-hidden rounded-lg bg-muted">
+                          <Image
+                            src={`/placeholder-${(i % 3) + 1}.svg`}
+                            alt="Listing"
+                            width={200}
+                            height={200}
+                            className="size-full object-cover"
+                          />
+                        </div>
+                      ))}
                 </div>
               </div>
             </div>
@@ -149,7 +168,9 @@ export default async function Home() {
       {featuredListings.length > 0 && (
         <section className="border-t border-border py-12">
           <div className="container mx-auto max-w-7xl px-4">
-            <h2 className="mb-8 text-3xl font-bold tracking-tight text-center">Featured Listings</h2>
+            <h2 className="mb-8 text-center text-3xl font-bold tracking-tight">
+              Featured Listings
+            </h2>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {featuredListings.map((listing) => (
                 <ListingCard key={listing.id} listing={listing} />
@@ -167,7 +188,7 @@ export default async function Home() {
       {/* Popular Categories Section */}
       <section className="border-t border-border py-12">
         <div className="container mx-auto max-w-7xl px-4">
-          <h2 className="mb-8 text-3xl font-bold tracking-tight text-center">Popular Categories</h2>
+          <h2 className="mb-8 text-center text-3xl font-bold tracking-tight">Popular Categories</h2>
           <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-6">
             {popularCategories.map((category) => (
               <Link
@@ -186,11 +207,16 @@ export default async function Home() {
       {/* Testimonials Section */}
       <section className="border-t border-border py-12">
         <div className="container mx-auto max-w-7xl px-4">
-          <h2 className="mb-8 text-3xl font-bold tracking-tight text-center">What Our Users Say</h2>
+          <h2 className="mb-8 text-center text-3xl font-bold tracking-tight">What Our Users Say</h2>
           <div className="grid gap-6 md:grid-cols-3">
             {testimonials.map((testimonial, index) => (
-              <div key={index} className="rounded-xl border border-border bg-background p-6 shadow-sm">
-                <p className="text-lg italic text-muted-foreground">&quot;{testimonial.quote}&quot;</p>
+              <div
+                key={index}
+                className="rounded-xl border border-border bg-background p-6 shadow-sm"
+              >
+                <p className="text-lg italic text-muted-foreground">
+                  &quot;{testimonial.quote}&quot;
+                </p>
                 <p className="mt-4 font-semibold">{testimonial.author}</p>
                 <p className="text-sm text-muted-foreground">{testimonial.title}</p>
               </div>
@@ -204,12 +230,24 @@ export default async function Home() {
         <div className="container mx-auto max-w-7xl px-4 py-12">
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              { title: 'Post in seconds', desc: 'Create listings with photos and reach buyers fast.' },
+              {
+                title: 'Post in seconds',
+                desc: 'Create listings with photos and reach buyers fast.',
+              },
               { title: 'Powerful search', desc: 'Filter by category, price, location, and more.' },
-              { title: 'Built-in chat', desc: 'Secure, real-time messaging with buyers and sellers.' },
-              { title: 'Trusted community', desc: 'Ratings, profiles, and moderation keep it safe.' },
+              {
+                title: 'Built-in chat',
+                desc: 'Secure, real-time messaging with buyers and sellers.',
+              },
+              {
+                title: 'Trusted community',
+                desc: 'Ratings, profiles, and moderation keep it safe.',
+              },
             ].map((f) => (
-              <div key={f.title} className="rounded-xl border border-border bg-background p-5 shadow-sm">
+              <div
+                key={f.title}
+                className="rounded-xl border border-border bg-background p-5 shadow-sm"
+              >
                 <h3 className="text-base font-semibold">{f.title}</h3>
                 <p className="mt-2 text-sm text-muted-foreground">{f.desc}</p>
               </div>
@@ -223,7 +261,10 @@ export default async function Home() {
         <div className="container mx-auto max-w-7xl px-4 py-12">
           <div className="flex flex-col items-center gap-4 text-center">
             <h2 className="text-pretty text-2xl font-bold sm:text-3xl">Ready to sell something?</h2>
-            <p className="max-w-2xl text-balance text-muted-foreground">Join thousands of users buying and selling safely every day. It takes less than a minute to post your first listing.</p>
+            <p className="max-w-2xl text-balance text-muted-foreground">
+              Join thousands of users buying and selling safely every day. It takes less than a
+              minute to post your first listing.
+            </p>
             <div className="flex gap-3">
               <Button asChild size="lg">
                 <Link href="/post">Post your first ad</Link>

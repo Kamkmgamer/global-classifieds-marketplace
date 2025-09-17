@@ -1,21 +1,21 @@
-import { Facebook, Twitter, Instagram } from "lucide-react";
-import Link from "next/link";
+import { Facebook, Twitter, Instagram } from 'lucide-react';
+import Link from 'next/link';
 
 const footerLinks = [
-  { href: "/privacy", label: "Privacy" },
-  { href: "/terms", label: "Terms" },
-  { href: "/contact", label: "Contact" },
+  { href: '/privacy', label: 'Privacy' },
+  { href: '/terms', label: 'Terms' },
+  { href: '/contact', label: 'Contact' },
 ];
 
 const socialLinks = [
-  { href: "#", icon: Facebook },
-  { href: "#", icon: Twitter },
-  { href: "#", icon: Instagram },
+  { href: '#', icon: Facebook },
+  { href: '#', icon: Twitter },
+  { href: '#', icon: Instagram },
 ];
 
 export function Footer() {
   return (
-    <footer className="mt-8 border-t border-border/60 glass">
+    <footer className="glass mt-8 border-t border-border/60">
       <div className="container-prose py-8">
         <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
           <div className="text-center sm:text-left">

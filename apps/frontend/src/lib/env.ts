@@ -1,7 +1,7 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 // Normalize URL by trimming trailing slashes
-const normalizeUrl = (v: string) => v.replace(/\/$/, "");
+const normalizeUrl = (v: string) => v.replace(/\/$/, '');
 
 const EnvSchema = z
   .object({
@@ -20,7 +20,7 @@ const EnvSchema = z
   })
   .transform((cfg) => {
     // Provide safe default for SITE_URL when not provided (dev)
-    const defaultSite = "http://localhost:3000";
+    const defaultSite = 'http://localhost:3000';
     return {
       NEXT_PUBLIC_BACKEND_URL: cfg.NEXT_PUBLIC_BACKEND_URL,
       NEXT_PUBLIC_SITE_URL: cfg.NEXT_PUBLIC_SITE_URL ?? defaultSite,
@@ -33,7 +33,7 @@ export type Env = z.infer<typeof EnvSchema>;
 export const env: Env = EnvSchema.parse({
   NEXT_PUBLIC_BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL,
   NEXT_PUBLIC_SITE_URL:
-    process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL?.startsWith("http")
+    process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL?.startsWith('http')
       ? (process.env.NEXT_PUBLIC_SITE_URL as string)
       : process.env.VERCEL_URL
         ? `https://${process.env.VERCEL_URL}`

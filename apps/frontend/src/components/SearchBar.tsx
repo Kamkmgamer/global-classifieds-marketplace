@@ -1,21 +1,22 @@
-"use client";
+'use client';
 
-import { useRouter, useSearchParams } from "next/navigation";
-import * as React from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { useRouter, useSearchParams } from 'next/navigation';
+import * as React from 'react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 export default function SearchBar({ className }: { className?: string }) {
   const router = useRouter();
   const params = useSearchParams();
-  const [q, setQ] = React.useState<string>(params.get("q") || "");
+  const [q, setQ] = React.useState<string>(params.get('q') || '');
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     const usp = new URLSearchParams(Array.from(params.entries()));
-    if (q) usp.set("q", q); else usp.delete("q");
+    if (q) usp.set('q', q);
+    else usp.delete('q');
     // Reset pagination on new searches
-    usp.set("page", "1");
+    usp.set('page', '1');
     router.push(`/browse?${usp.toString()}`);
   }
 

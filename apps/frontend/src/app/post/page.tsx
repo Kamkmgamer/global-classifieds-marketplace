@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import * as React from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { useRouter } from "next/navigation";
-import { useToast } from "@/hooks/use-toast"; // Import useToast
-import { useAuth } from "@/hooks/use-auth"; // Import useAuth
-import { api } from "@/lib/http";
+import * as React from 'react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast'; // Import useToast
+import { useAuth } from '@/hooks/use-auth'; // Import useAuth
+import { api } from '@/lib/http';
 
 export default function PostPage() {
   const router = useRouter();
@@ -19,7 +19,7 @@ export default function PostPage() {
 
   React.useEffect(() => {
     if (!isAuthenticated) {
-      router.push("/login"); // Redirect to login if not authenticated
+      router.push('/login'); // Redirect to login if not authenticated
     }
   }, [isAuthenticated, router]);
 
@@ -28,32 +28,34 @@ export default function PostPage() {
     setError(null);
     try {
       const payload = {
-        title: String(formData.get("title") || "").trim(),
-        price: Number.parseInt(String(formData.get("price") || "0"), 10) || 0,
-        image: String(formData.get("image") || "").trim() || undefined,
-        location: String(formData.get("location") || "").trim() || undefined,
-        description: String(formData.get("description") || "").trim() || undefined,
+        title: String(formData.get('title') || '').trim(),
+        price: Number.parseInt(String(formData.get('price') || '0'), 10) || 0,
+        image: String(formData.get('image') || '').trim() || undefined,
+        location: String(formData.get('location') || '').trim() || undefined,
+        description: String(formData.get('description') || '').trim() || undefined,
       };
 
-      const token = localStorage.getItem("access_token"); // Get token
+      const token = localStorage.getItem('access_token'); // Get token
       if (!token) {
-        throw new Error("Authentication token not found.");
+        throw new Error('Authentication token not found.');
       }
 
-      await api.post("/listings", payload, { headers: { Authorization: `Bearer ${token}` } });
-      toast({ // Show success toast
-        title: "Listing created!",
-        description: "Your listing has been successfully posted.",
+      await api.post('/listings', payload, { headers: { Authorization: `Bearer ${token}` } });
+      toast({
+        // Show success toast
+        title: 'Listing created!',
+        description: 'Your listing has been successfully posted.',
       });
-      router.push("/browse");
+      router.push('/browse');
       router.refresh();
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Something went wrong";
+      const msg = e instanceof Error ? e.message : 'Something went wrong';
       setError(msg);
-      toast({ // Show error toast
-        title: "Error",
+      toast({
+        // Show error toast
+        title: 'Error',
         description: msg,
-        variant: "destructive",
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -63,7 +65,9 @@ export default function PostPage() {
   return (
     <div className="container mx-auto max-w-3xl px-4 py-12">
       <h1 className="text-2xl font-bold tracking-tight">Post a Listing</h1>
-      <p className="mt-2 text-muted-foreground">Create a new listing with title, price, location, and optional image.</p>
+      <p className="mt-2 text-muted-foreground">
+        Create a new listing with title, price, location, and optional image.
+      </p>
       <Card className="mt-6">
         <CardContent>
           <form
@@ -75,44 +79,59 @@ export default function PostPage() {
             }}
           >
             <div className="grid gap-2">
-              <label htmlFor="title" className="text-sm font-medium">Title</label>
-              <Input id="title" name="title" placeholder="Vintage road bike" required  />
+              <label htmlFor="title" className="text-sm font-medium">
+                Title
+              </label>
+              <Input id="title" name="title" placeholder="Vintage road bike" required />
             </div>
 
             <div className="grid gap-2 sm:grid-cols-2">
               <div className="grid gap-2">
-                <label htmlFor="price" className="text-sm font-medium">Price (USD)</label>
-                <Input id="price" name="price" inputMode="numeric" pattern="[0-9]*" placeholder="250" required  />
+                <label htmlFor="price" className="text-sm font-medium">
+                  Price (USD)
+                </label>
+                <Input
+                  id="price"
+                  name="price"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  placeholder="250"
+                  required
+                />
               </div>
               <div className="grid gap-2">
-                <label htmlFor="location" className="text-sm font-medium">Location</label>
-                <Input id="location" name="location" placeholder="Berlin"  />
+                <label htmlFor="location" className="text-sm font-medium">
+                  Location
+                </label>
+                <Input id="location" name="location" placeholder="Berlin" />
               </div>
             </div>
 
             <div className="grid gap-2">
-              <label htmlFor="image" className="text-sm font-medium">Image URL</label>
-              <Input id="image" name="image" type="url" placeholder="https://..."  />
+              <label htmlFor="image" className="text-sm font-medium">
+                Image URL
+              </label>
+              <Input id="image" name="image" type="url" placeholder="https://..." />
             </div>
 
             <div className="grid gap-2">
-              <label htmlFor="description" className="text-sm font-medium">Description</label>
+              <label htmlFor="description" className="text-sm font-medium">
+                Description
+              </label>
               <textarea
                 id="description"
                 name="description"
                 rows={5}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                className="border-input focus-visible:ring-ring flex h-10 w-full rounded-md border bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                 placeholder="Add details about condition, accessories, etc."
               />
             </div>
 
-            {error && (
-              <div className="text-sm text-destructive">{error}</div>
-            )}
+            {error && <div className="text-destructive text-sm">{error}</div>}
 
             <div className="flex items-center gap-3">
               <Button disabled={loading} className="px-6">
-                {loading ? "Posting..." : "Post Listing"}
+                {loading ? 'Posting...' : 'Post Listing'}
               </Button>
             </div>
           </form>

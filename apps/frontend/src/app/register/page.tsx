@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import * as React from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useRouter } from "next/navigation";
-import { useToast } from "@/hooks/use-toast";
-import Link from "next/link";
-import { api } from "@/lib/http";
+import * as React from 'react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
+import Link from 'next/link';
+import { api } from '@/lib/http';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -21,24 +21,24 @@ export default function RegisterPage() {
     setError(null);
 
     const formData = new FormData(event.currentTarget);
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
 
     try {
-      await api.post("/auth/register", { email, password });
+      await api.post('/auth/register', { email, password });
 
       toast({
-        title: "Registration Successful!",
-        description: "You can now log in with your new account.",
+        title: 'Registration Successful!',
+        description: 'You can now log in with your new account.',
       });
-      router.push("/login");
+      router.push('/login');
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Registration failed";
+      const msg = e instanceof Error ? e.message : 'Registration failed';
       setError(msg);
       toast({
-        title: "Error",
+        title: 'Error',
         description: msg,
-        variant: "destructive",
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -61,12 +61,12 @@ export default function RegisterPage() {
               <label htmlFor="password">Password</label>
               <Input id="password" name="password" type="password" required />
             </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {error && <p className="text-destructive text-sm">{error}</p>}
             <Button type="submit" disabled={loading}>
-              {loading ? "Registering..." : "Register"}
+              {loading ? 'Registering...' : 'Register'}
             </Button>
             <p className="text-center text-sm text-muted-foreground">
-              Already have an account?{" "}
+              Already have an account?{' '}
               <Link href="/login" className="underline">
                 Login
               </Link>

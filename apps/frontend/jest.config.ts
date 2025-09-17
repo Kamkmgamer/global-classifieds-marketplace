@@ -8,7 +8,7 @@ const config = {
   },
   // Transpile ESM packages used in UI components
   transformIgnorePatterns: [
-    '/node_modules/(?!(?:@radix-ui|radix-ui|lucide-react|class-variance-authority)/)'
+    '/node_modules/(?!(?:@radix-ui|radix-ui|lucide-react|class-variance-authority)/)',
   ],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
@@ -19,8 +19,8 @@ const config = {
   collectCoverageFrom: ['src/**/*.(ts|tsx)'],
   globals: {
     'ts-jest': {
-      tsconfig: '<rootDir>/tsconfig.jest.json'
-    }
+      tsconfig: '<rootDir>/tsconfig.jest.json',
+    },
   },
 };
 

@@ -7,7 +7,9 @@ test('Home to Browse flow and health endpoint', async ({ page, baseURL, request 
   // Home
   await page.goto('/', { waitUntil: 'commit' });
   // Ensure hero content rendered before interacting
-  await expect(page.getByRole('heading', { name: /buy\. sell\. chat\. anywhere\./i })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: /buy\. sell\. chat\. anywhere\./i }),
+  ).toBeVisible();
 
   // Ensure the "Browse Listings" CTA is visible and works
   const browseLink = page.getByRole('link', { name: /browse listings/i });
