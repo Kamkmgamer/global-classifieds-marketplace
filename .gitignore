@@ -36,3 +36,9 @@ ToDoWeek.md
 ToDoWeek2.md
 ToDOWeek3.md
 ToDoWeek4+.md
+
+#env
+.env
+.env.development
+.env.production
+.env.test
