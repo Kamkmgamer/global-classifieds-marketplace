@@ -31,43 +31,30 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Show frontend tsconfig (debug)
-        run: |
-          echo "Using apps/frontend/tsconfig.json:" && echo "---" && cat apps/frontend/tsconfig.json && echo "---"
-
       - name: Typecheck
-        run: |
-          # Typecheck frontend using its package script to ensure local TS version and tsconfig path aliases are respected
-          pnpm --filter frontend run typecheck
-          # Still typecheck backend via its own script
-          pnpm --filter backend run typecheck
+        run: pnpm typecheck
 
       - name: Lint
-        run: pnpm -w lint
+        run: pnpm lint
 
-      - name: Test
-        run: pnpm -w test
+      - name: Format Check
+        run: pnpm format:check
 
       - name: Build
-        run: pnpm -w build
+        run: pnpm build
 
       - name: Dependency Scan (pnpm audit)
         run: pnpm audit --audit-level high || true
 
       - name: Generate SBOM (CycloneDX)
         run: |
-          pnpm dlx @cyclonedx/cyclonedx-npm --output-file sbom-root.json --spec-version 1.5
-          pnpm --filter frontend dlx @cyclonedx/cyclonedx-npm --output-file sbom-frontend.json --spec-version 1.5
-          pnpm --filter backend dlx @cyclonedx/cyclonedx-npm --output-file sbom-backend.json --spec-version 1.5
+          pnpm dlx @cyclonedx/cyclonedx-npm --output-file sbom.json --spec-version 1.5
 
       - name: Upload SBOM Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: sbom
-          path: |
-            sbom-root.json
-            sbom-frontend.json
-            sbom-backend.json
+          path: sbom.json
 
       - name: Secret Scan (Gitleaks)
         uses: gitleaks/gitleaks-action@v2

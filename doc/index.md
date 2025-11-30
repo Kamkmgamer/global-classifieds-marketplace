@@ -1,52 +1,58 @@
 # Global Classifieds Marketplace – Documentation Index
 
-This documentation provides a comprehensive overview of the project, covering backend, frontend, database, and architecture.
+This documentation provides a comprehensive overview of the project, covering architecture, database, and development guidelines.
 
 - Project: `global-classifieds-marketplace`
-- Monorepo: `apps/backend` (NestJS) and `apps/frontend` (Next.js)
+- Architecture: Full-stack Next.js application
 - Package manager: pnpm
 
 ## Table of Contents
 - [Overview](#overview)
 - [Architecture](architecture.md)
-- [Backend](backend.md)
 - [Database](database.md)
-- [Frontend](frontend.md)
 - [How to Run](#how-to-run)
 - [Testing Strategy](#testing-strategy)
 - [Contribution Guidelines](#contribution-guidelines)
 - [Known Gaps / Next Steps](#known-gaps--next-steps)
 
 ## Overview
-The Global Classifieds Marketplace is a full‑stack monorepo with:
-- Backend API built with NestJS 11, TypeORM 0.3.x, Postgres 16, Redis cache, JWT auth, Prometheus metrics, and OpenTelemetry tracing.
-- Frontend app built with Next.js 15 (App Router), React 19, TailwindCSS, Radix UI primitives, and a typed HTTP client.
-- Docker Compose for local development and staging, plus Prometheus and Grafana.
+The Global Classifieds Marketplace is a full‑stack Next.js application with:
+- Next.js 15 (App Router) with API routes
+- PostgreSQL database with Drizzle ORM
+- Redis cache for performance optimization
+- JWT authentication with refresh tokens
+- Argon2 password hashing with bcrypt migration support
+- Comprehensive security features (rate limiting, audit logging, account lockout)
 
 Key goals:
 - Provide a secure, observable, and scalable marketplace API and UI.
-- Demonstrate robust auth, validation, rate limiting, and metrics.
+- Demonstrate robust auth, validation, rate limiting, and caching.
 
 ## How to Run
-- Development (Compose):
-  - `docker-compose up --build`
-  - Services: frontend (http://localhost:3000), backend (http://localhost:5000), Postgres (5432), Redis (6379), Prometheus (9090), Grafana (3001)
-- Staging-like setup: `docker-compose -f docker-compose.staging.yml up --build`
 
-See `docker-compose.yml`, `docker-compose.staging.yml`, `apps/backend/Dockerfile`, and `apps/frontend/Dockerfile`.
+1. Install dependencies: `pnpm install`
+2. Set up environment variables (see README.md)
+3. Start PostgreSQL and Redis
+4. Run database migrations: `pnpm db:push`
+5. Start development server: `pnpm dev`
+6. Access: `http://localhost:3000`
 
 ## Testing Strategy
-- Backend: Jest unit tests and e2e config available. See `apps/backend/package.json` scripts and `apps/backend/src/**/*.spec.ts`.
-- Frontend: Jest + Testing Library for unit; Playwright for e2e. See `apps/frontend/package.json` (scripts: `test`, `e2e`).
+
+- Unit tests: Jest (configured in `jest.config.ts`)
+- E2E tests: Playwright (configured in `playwright.config.ts`)
+- Type checking: `pnpm typecheck`
+- Linting: `pnpm lint`
 
 ## Contribution Guidelines
-- Conventional formatting via Prettier and ESLint in both apps.
-- Type checking with TypeScript; run `pnpm -r run typecheck`.
-- Linting: `pnpm -r run lint`.
-- Prefer adding tests for new features.
+
+- Conventional formatting via Prettier and ESLint
+- Type checking with TypeScript; run `pnpm typecheck`
+- Linting: `pnpm lint`
+- Prefer adding tests for new features
 
 ## Known Gaps / Next Steps
-- No explicit relation between `Listing` and `User` yet.
-- Session management currently relies on bearer tokens (frontend stores a token for demo). Consider HttpOnly cookies.
-- Add production migration workflow and CI gates.
-- Expand API surface for listings CRUD and user profile management.
+
+- Expand API surface for listings CRUD and user profile management
+- Add production migration workflow and CI gates
+- Consider HttpOnly cookies for enhanced session security

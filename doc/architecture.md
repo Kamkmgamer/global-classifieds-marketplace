@@ -1,11 +1,10 @@
 # Architecture
 
-This monorepo contains a typed full‑stack web application with a NestJS backend and a Next.js frontend. Persistence is handled by PostgreSQL via TypeORM, with Redis for caching/rate limiting. Observability is provided by Prometheus metrics and optional OpenTelemetry traces.
+This is a full-stack Next.js application with all backend functionality integrated as API routes. Persistence is handled by PostgreSQL via Drizzle ORM, with Redis for caching/rate limiting.
 
-- Monorepo root: `global-classifieds-marketplace`
-- Backend: `apps/backend` (NestJS)
-- Frontend: `apps/frontend` (Next.js App Router)
-- Ops: `ops/` (Prometheus and OTEL collector configs)
+- Application root: `global-classifieds-marketplace`
+- Framework: Next.js 15 (App Router)
+- Ops: `ops/` (Prometheus and OTEL collector configs, optional)
 
 ## High-Level Diagram (Mermaid)
 ```mermaid
@@ -14,14 +13,11 @@ flowchart LR
     Browser[User Browser]
   end
 
-  subgraph Frontend[Next.js (apps/frontend)]
-    NextServer[Next Standalone Server]
-    NextAPI[/Next API routes /api/*/]
-  end
-
-  subgraph Backend[NestJS API (apps/backend)]
-    Nest[HTTP Server]
-    Metrics[/GET /metrics/]
+  subgraph NextApp[Next.js Full-Stack Application]
+    NextServer[Next.js Server]
+    NextAPI[/API Routes /api/*/]
+    NextPages[Pages /]
+    Services[Services Layer]
   end
 
   subgraph Data[Data Services]
@@ -30,60 +26,56 @@ flowchart LR
   end
 
   subgraph Observability[Observability]
-    Prometheus[Prometheus]
-    Grafana[Grafana]
-    OTEL[OTEL Collector (optional)]
+    Prometheus[Prometheus - Optional]
+    Grafana[Grafana - Optional]
   end
 
   Browser -->|HTTP:3000| NextServer
-  NextServer -->|/api/* proxy| NextAPI
-  NextAPI -->|HTTP| Nest
-  Nest -->|TypeORM| PG
-  Nest -->|cache-manager| Redis
-  Nest -->|/metrics| Metrics --> Prometheus --> Grafana
-  Nest -. optional traces .-> OTEL
+  NextServer --> NextPages
+  NextServer --> NextAPI
+  NextAPI --> Services
+  Services -->|Drizzle ORM| PG
+  Services -->|cache-manager| Redis
+  NextAPI -. optional metrics .-> Prometheus --> Grafana
 ```
 
 ## Request Flow
 1. Browser sends requests to Next.js (port 3000).
-2. Client-side code uses `src/lib/http.ts`, which on the browser prefixes requests with `/api`.
-3. Next API routes can proxy to the backend using `env.NEXT_PUBLIC_BACKEND_URL` on the server.
-4. Backend handles requests via Nest controllers/services, with validation, guards, and interceptors.
-5. Persistence through TypeORM to Postgres; caching/rate limits via Redis.
-6. Metrics exposed at `/metrics` scraped by Prometheus and visualized in Grafana.
-7. Optional OTEL traces exported via HTTP to a collector.
+2. Client-side code uses `src/lib/http.ts`, which prefixes requests with `/api`.
+3. Next.js API routes (`src/app/api/*/route.ts`) handle requests directly.
+4. API routes use services from `src/lib/services/` for business logic.
+5. Services interact with PostgreSQL via Drizzle ORM and Redis for caching.
+6. Responses are returned directly from API routes.
+7. Optional metrics can be exposed at `/api/metrics` for Prometheus.
 
-## Backend Architecture Notes
-- Root module `AppModule` wires modules, TypeORM connection, Redis cache, and configuration.
-- Global `RateLimitGuard` throttles requests and returns 429 when exceeded.
-- Auth uses Local strategy for login and JWT for protected routes.
-- `MetricsInterceptor` and `LoggingInterceptor` provide timing and logs; `AllExceptionsFilter` unifies error responses.
+## Application Architecture Notes
+- **API Routes**: All backend functionality is in `src/app/api/` using Next.js Route Handlers
+- **Services**: Business logic is separated into service classes in `src/lib/services/`
+- **Database**: Drizzle ORM with PostgreSQL for type-safe database operations
+- **Caching**: Redis-based caching for listings and rate limiting
+- **Authentication**: JWT-based auth with refresh tokens, account lockout, and audit logging
+- **Security**: Rate limiting via middleware, security headers, and comprehensive audit trails
 
-## Deployment Topology
-- Local dev: `docker-compose.yml` launches frontend, backend, Postgres, Redis, Prometheus, Grafana.
-- Staging: `docker-compose.staging.yml` supports prebuilt images and avoids exposing DB/Redis ports publicly.
-- Dockerfiles build standalone images with pnpm for both apps.
+## Key Components
 
-### Ports
-- Frontend: 3000
-- Backend: 5000 (9229 debug)
-- Postgres: 5432 (dev exposed, staging not exposed by default)
-- Redis: 6379 (dev exposed, staging not exposed by default)
-- Prometheus: 9090
-- Grafana: 3001
+### API Routes (`src/app/api/`)
+- `/api/auth/*` – Authentication endpoints (login, register, refresh, logout)
+- `/api/listings/*` – Listings CRUD operations
+- `/api/health` – Health check endpoint
 
-## Diagrams to Add (Manual)
-- Detailed sequence diagram for login and token issuance.
-- ERD with future `User`↔`Listing` relation.
+### Services (`src/lib/services/`)
+- `AuthService` – Handles authentication, account lockout, token management
+- `UsersService` – User CRUD operations
+- `ListingsService` – Listings operations with caching
+- `PasswordService` – Argon2 password hashing with bcrypt migration
+- `RefreshTokenService` – Refresh token management
+- `AuditService` – Security audit logging
 
-## Key Design Decisions
-- Use Redis-backed rate limiting and auth lockout to mitigate brute-force attempts.
-- Disable TypeORM synchronize in production; rely on migrations.
-- Expose Prometheus metrics for SRE dashboards; optional OTEL for trace correlation.
-- Next.js API as a proxy boundary to avoid exposing backend hostnames to the client.
+### Database (`src/db/`)
+- `schema.ts` – Drizzle ORM schema definitions
+- Database connection managed via `src/lib/db.ts`
 
-## Risks and Future Improvements
-- Session handling currently uses localStorage in the demo; prefer HttpOnly cookies in production.
-- Add ownership relation between `Listing` and `User` and enforce RBAC for listing management.
-- Implement full CRUD for listings and user profiles.
-- Harden CORS and CSP as deployment environments dictate.
+### Middleware (`middleware.ts`)
+- Rate limiting for API routes
+- Content Security Policy (CSP) headers
+- Authentication guards for protected routes
