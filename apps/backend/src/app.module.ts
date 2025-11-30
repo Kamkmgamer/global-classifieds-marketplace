@@ -7,6 +7,7 @@ import { AppService } from './app.service';
 import { ListingsModule } from './listings/listings.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { UploadModule } from './upload/upload.module';
 import * as redisStore from 'cache-manager-redis-store';
 import { RateLimitGuard } from './common/guards/rate-limit.guard';
 import { HealthController } from './health.controller';
@@ -70,6 +71,7 @@ import * as Joi from 'joi';
     AuthModule,
     UsersModule,
     ListingsModule,
+    UploadModule,
   ],
   controllers: [AppController, HealthController],
   providers: [

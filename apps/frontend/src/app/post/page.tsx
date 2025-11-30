@@ -5,21 +5,25 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useRouter } from 'next/navigation';
-import { useToast } from '@/hooks/use-toast'; // Import useToast
-import { useAuth } from '@/hooks/use-auth'; // Import useAuth
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
 import { api } from '@/lib/http';
+import { UploadButton } from '@/lib/uploadthing';
+import Image from 'next/image';
+import '@uploadthing/react/styles.css';
 
 export default function PostPage() {
   const router = useRouter();
-  const { toast } = useToast(); // Initialize useToast
-  const { isAuthenticated } = useAuth(); // Use useAuth hook
+  const { toast } = useToast();
+  const { isAuthenticated } = useAuth();
 
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [imageUrl, setImageUrl] = React.useState<string>('');
 
   React.useEffect(() => {
     if (!isAuthenticated) {
-      router.push('/login'); // Redirect to login if not authenticated
+      router.push('/login');
     }
   }, [isAuthenticated, router]);
 
@@ -30,19 +34,18 @@ export default function PostPage() {
       const payload = {
         title: String(formData.get('title') || '').trim(),
         price: Number.parseInt(String(formData.get('price') || '0'), 10) || 0,
-        image: String(formData.get('image') || '').trim() || undefined,
+        image: imageUrl || undefined,
         location: String(formData.get('location') || '').trim() || undefined,
         description: String(formData.get('description') || '').trim() || undefined,
       };
 
-      const token = localStorage.getItem('access_token'); // Get token
+      const token = localStorage.getItem('access_token');
       if (!token) {
         throw new Error('Authentication token not found.');
       }
 
       await api.post('/listings', payload, { headers: { Authorization: `Bearer ${token}` } });
       toast({
-        // Show success toast
         title: 'Listing created!',
         description: 'Your listing has been successfully posted.',
       });
@@ -52,7 +55,6 @@ export default function PostPage() {
       const msg = e instanceof Error ? e.message : 'Something went wrong';
       setError(msg);
       toast({
-        // Show error toast
         title: 'Error',
         description: msg,
         variant: 'destructive',
@@ -108,10 +110,33 @@ export default function PostPage() {
             </div>
 
             <div className="grid gap-2">
-              <label htmlFor="image" className="text-sm font-medium">
-                Image URL
-              </label>
-              <Input id="image" name="image" type="url" placeholder="https://..." />
+              <label className="text-sm font-medium">Image</label>
+              <div className="flex flex-col gap-3">
+                <UploadButton
+                  endpoint="imageUploader"
+                  onClientUploadComplete={(res) => {
+                    if (res && res[0]) {
+                      setImageUrl(res[0].url);
+                      toast({
+                        title: 'Upload complete!',
+                        description: 'Your image has been uploaded successfully.',
+                      });
+                    }
+                  }}
+                  onUploadError={(error: Error) => {
+                    toast({
+                      title: 'Upload failed',
+                      description: error.message,
+                      variant: 'destructive',
+                    });
+                  }}
+                />
+                {imageUrl && (
+                  <div className="relative h-48 w-full overflow-hidden rounded-md border">
+                    <Image src={imageUrl} alt="Uploaded preview" fill className="object-cover" />
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="grid gap-2">
