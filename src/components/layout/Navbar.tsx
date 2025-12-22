@@ -12,8 +12,8 @@ import {
   SheetDescription,
 } from '@/components/ui/sheet';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
-import { Menu as MenuIcon, X as XIcon } from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth'; // Import useAuth
+import { Menu as MenuIcon, X as XIcon, Globe } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
 
 const navLinks = [
   { href: '/browse', label: 'Browse' },
@@ -24,154 +24,133 @@ const navLinks = [
 export function Navbar() {
   const pathname = usePathname();
   const [isSheetOpen, setSheetOpen] = useState(false);
-  const { isAuthenticated, logout } = useAuth(); // Use useAuth hook
+  const { isAuthenticated, logout } = useAuth();
 
   const closeSheet = () => setSheetOpen(false);
 
   return (
-    <header className="glass sticky top-0 z-40">
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container-prose">
         <nav className="flex h-16 items-center justify-between">
           <Link
             href="/"
-            className="flex items-center gap-2 font-semibold transition-opacity hover:opacity-90"
+            className="flex items-center gap-2 text-xl font-bold transition-opacity hover:opacity-90"
           >
-            <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-sm-soft">
-              G
-            </span>
-            <span className="tracking-tight">Global Classifieds</span>
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+              <Globe className="h-5 w-5" />
+            </div>
+            <span className="hidden tracking-tight sm:inline-block">Global Classifieds</span>
           </Link>
-          <div className="hidden items-center gap-4 md:flex">
+          <div className="hidden items-center gap-6 md:flex">
             {navLinks.map(({ href, label }) => (
               <Link
                 key={href}
                 href={href}
-                className={`relative text-sm font-medium transition-colors hover:text-primary ${
+                className={`text-sm font-medium transition-colors hover:text-primary ${
                   pathname === href ? 'text-primary' : 'text-muted-foreground'
-                } after:absolute after:-bottom-2 after:left-0 after:h-0.5 after:w-full after:scale-x-0 after:bg-primary after:transition-transform after:duration-200 hover:after:scale-x-100 ${
-                  pathname === href ? 'after:scale-x-100' : ''
                 }`}
               >
                 {label}
               </Link>
             ))}
-            {isAuthenticated ? (
-              <>
-                <Button
-                  asChild
-                  className="shadow-sm-soft hover:shadow-md-soft active:translate-y-[1px]"
-                >
-                  <Link href="/post">Post an Ad</Link>
-                </Button>
-                <Button variant="outline" onClick={logout} className="hover:bg-accent/10">
-                  Logout
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button asChild variant="outline" className="hover:bg-accent/10">
-                  <Link href="/login">Login</Link>
-                </Button>
-                <Button
-                  asChild
-                  className="shadow-sm-soft hover:shadow-md-soft active:translate-y-[1px]"
-                >
-                  <Link href="/register">Register</Link>
-                </Button>
-              </>
-            )}
           </div>
-          <div className="hidden items-center gap-2 md:flex">
-            <ThemeToggle />
-          </div>
-          <div className="flex items-center gap-2 md:hidden">
-            <ThemeToggle />
-            <Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="icon" className="hover:bg-accent/10">
-                  {isSheetOpen ? ( // Conditionally render XIcon or MenuIcon
-                    <XIcon className="h-4 w-4" />
-                  ) : (
-                    <MenuIcon className="h-4 w-4" />
-                  )}
-                  <span className="sr-only">Toggle menu</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-full max-w-xs">
-                <SheetTitle className="sr-only">Mobile Navigation</SheetTitle>
-                <SheetDescription className="sr-only">
-                  Navigation links for the mobile version of the site.
-                </SheetDescription>
-                <div className="flex h-full flex-col">
-                  <div className="flex items-center justify-between border-b pb-4">
-                    <Link
-                      href="/"
-                      className="flex items-center gap-2 font-semibold"
-                      onClick={closeSheet}
-                    >
-                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-sm-soft">
-                        G
-                      </span>
-                      <span>Global Classifieds</span>
-                    </Link>
-                    {/* Remove the extra SheetTrigger here */}
-                  </div>
-                  <div className="flex flex-1 flex-col gap-4 py-6">
-                    {navLinks.map(({ href, label }) => (
+          <div className="flex items-center gap-4">
+            <div className="hidden items-center gap-2 md:flex">
+              <ThemeToggle />
+              {isAuthenticated ? (
+                <>
+                  <Button asChild variant="default" size="sm" className="shadow-sm">
+                    <Link href="/post">Post Ad</Link>
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={logout}>
+                    Logout
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button asChild variant="ghost" size="sm">
+                    <Link href="/login">Login</Link>
+                  </Button>
+                  <Button asChild size="sm" className="shadow-sm">
+                    <Link href="/register">Get Started</Link>
+                  </Button>
+                </>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 md:hidden">
+              <ThemeToggle />
+              <Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-9 w-9">
+                    {isSheetOpen ? <XIcon className="h-5 w-5" /> : <MenuIcon className="h-5 w-5" />}
+                    <span className="sr-only">Toggle menu</span>
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-full max-w-xs sm:max-w-sm">
+                  <SheetTitle className="sr-only">Mobile Navigation</SheetTitle>
+                  <SheetDescription className="sr-only">
+                    Navigation links for the mobile version of the site.
+                  </SheetDescription>
+                  <div className="flex h-full flex-col">
+                    <div className="mb-4 flex items-center justify-between border-b pb-4">
                       <Link
-                        key={href}
-                        href={href}
+                        href="/"
+                        className="flex items-center gap-2 text-lg font-bold"
                         onClick={closeSheet}
-                        className={`text-lg font-medium transition-colors hover:text-primary ${
-                          pathname === href ? 'text-primary' : 'text-foreground'
-                        }`}
                       >
-                        {label}
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+                          <Globe className="h-5 w-5" />
+                        </div>
+                        <span>Global Classifieds</span>
                       </Link>
-                    ))}
-                    {isAuthenticated ? (
-                      <>
-                        <Button
-                          asChild
-                          className="w-full shadow-sm-soft hover:shadow-md-soft active:translate-y-[1px]"
+                    </div>
+                    <div className="flex flex-1 flex-col gap-4">
+                      {navLinks.map(({ href, label }) => (
+                        <Link
+                          key={href}
+                          href={href}
                           onClick={closeSheet}
+                          className={`text-lg font-medium transition-colors hover:text-primary ${
+                            pathname === href ? 'text-primary' : 'text-foreground'
+                          }`}
                         >
-                          <Link href="/post">Post an Ad</Link>
-                        </Button>
-                        <Button
-                          variant="outline"
-                          className="w-full hover:bg-accent/10"
-                          onClick={() => {
-                            logout();
-                            closeSheet();
-                          }}
-                        >
-                          Logout
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <Button
-                          asChild
-                          variant="outline"
-                          className="w-full hover:bg-accent/10"
-                          onClick={closeSheet}
-                        >
-                          <Link href="/login">Login</Link>
-                        </Button>
-                        <Button
-                          asChild
-                          className="w-full shadow-sm-soft hover:shadow-md-soft active:translate-y-[1px]"
-                          onClick={closeSheet}
-                        >
-                          <Link href="/register">Register</Link>
-                        </Button>
-                      </>
-                    )}
+                          {label}
+                        </Link>
+                      ))}
+                    </div>
+                    <div className="mt-auto flex flex-col gap-3 pb-6">
+                      {isAuthenticated ? (
+                        <>
+                          <Button asChild className="w-full" onClick={closeSheet}>
+                            <Link href="/post">Post an Ad</Link>
+                          </Button>
+                          <Button
+                            variant="outline"
+                            className="w-full"
+                            onClick={() => {
+                              logout();
+                              closeSheet();
+                            }}
+                          >
+                            Logout
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button asChild variant="outline" className="w-full" onClick={closeSheet}>
+                            <Link href="/login">Login</Link>
+                          </Button>
+                          <Button asChild className="w-full" onClick={closeSheet}>
+                            <Link href="/register">Get Started</Link>
+                          </Button>
+                        </>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </SheetContent>
-            </Sheet>
+                </SheetContent>
+              </Sheet>
+            </div>
           </div>
         </nav>
       </div>

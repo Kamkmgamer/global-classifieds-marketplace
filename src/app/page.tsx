@@ -4,19 +4,39 @@ import { env } from '@/lib/env';
 import Script from 'next/script';
 import { headers, cookies } from 'next/headers';
 import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardFooter,
+} from '@/components/ui/card';
 import ListingCard from '@/components/ListingCard';
 import { api } from '@/lib/http';
 import { ListingsResponseSchema } from '@/lib/schemas';
+import {
+  Zap,
+  Car,
+  Home as HomeIcon,
+  Shirt,
+  Dumbbell,
+  BookOpen,
+  Search,
+  MessageCircle,
+  ShieldCheck,
+  ArrowRight,
+} from 'lucide-react';
 
 // Function to fetch listings through the robust API client
 async function fetchListings(limit: number = 6) {
   const mock = () =>
     Array.from({ length: limit }).map((_, i) => ({
       id: `mock-${i + 1}`,
-      title: `Sample item ${i + 1}`,
-      price: (i + 1) * 10,
+      title: `Sample Premium Item ${i + 1}`,
+      price: (i + 1) * 120,
       image: `/placeholder-${(i % 3) + 1}.svg`,
-      location: 'Local',
+      location: 'New York, NY',
     }));
 
   // If no backend is configured (e.g., local dev without API), return mock data
@@ -52,12 +72,12 @@ async function fetchListings(limit: number = 6) {
 }
 
 const popularCategories = [
-  { name: 'Electronics', icon: '⚡️' },
-  { name: 'Vehicles', icon: '🚗' },
-  { name: 'Home & Garden', icon: '🏡' },
-  { name: 'Fashion', icon: '👕' },
-  { name: 'Sports', icon: '⚽️' },
-  { name: 'Books', icon: '📚' },
+  { name: 'Electronics', icon: Zap, color: 'text-yellow-500' },
+  { name: 'Vehicles', icon: Car, color: 'text-blue-500' },
+  { name: 'Home & Garden', icon: HomeIcon, color: 'text-green-500' },
+  { name: 'Fashion', icon: Shirt, color: 'text-pink-500' },
+  { name: 'Sports', icon: Dumbbell, color: 'text-orange-500' },
+  { name: 'Books', icon: BookOpen, color: 'text-purple-500' },
 ];
 
 const testimonials = [
@@ -87,7 +107,7 @@ export default async function Home() {
   const nonce = hdrs.get('x-nonce') || cookieStore.get('nonce')?.value || undefined;
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-background">
       <Script id="ld-org" type="application/ld+json" strategy="afterInteractive" nonce={nonce}>
         {JSON.stringify({
           '@context': 'https://schema.org',
@@ -110,166 +130,225 @@ export default async function Home() {
           },
         })}
       </Script>
-      {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-[rgb(var(--primary)/0.1)] via-transparent to-transparent" />
-        <div className="container mx-auto max-w-7xl px-4 py-16 sm:py-24">
-          <div className="grid items-center gap-10 lg:grid-cols-2">
-            <div>
-              <h1 className="text-balance text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
+
+      {/* Hero Section */}
+      <section className="relative overflow-hidden pb-16 pt-16 md:pt-24 lg:pt-32">
+        <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/20 via-background to-background" />
+        <div className="container px-4 md:px-6">
+          <div className="flex flex-col items-center space-y-8 text-center">
+            <div className="max-w-3xl space-y-4">
+              <h1 className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-4xl font-bold tracking-tighter text-transparent sm:text-5xl md:text-6xl lg:text-7xl">
                 Buy. Sell. Chat. Anywhere.
               </h1>
-              <p className="mt-4 text-balance text-lg text-muted-foreground">
+              <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
                 The modern marketplace for everything. Post listings in seconds, discover deals
                 nearby or worldwide, and chat securely to close the sale.
               </p>
-              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                <Button asChild size="lg">
-                  <Link href="/post">Post an Ad</Link>
-                </Button>
-                <Button asChild variant="outline" size="lg">
-                  <Link href="/browse">Browse Listings</Link>
-                </Button>
-              </div>
-              {backendUrl && (
-                <p className="mt-4 text-xs text-muted-foreground">
-                  Backend: <code className="font-semibold">{backendUrl}</code>
-                </p>
-              )}
             </div>
-            <div className="relative">
-              <div className="pointer-events-none absolute -right-10 -top-10 hidden size-40 rounded-full bg-[rgb(var(--primary)/0.2)] blur-3xl sm:block" />
-              <div className="rounded-xl border border-border bg-white p-4 shadow-sm dark:bg-neutral-900">
-                <div className="grid grid-cols-3 gap-3">
-                  {/* Display featured listings */}
-                  {featuredListings.length > 0
-                    ? featuredListings.map((listing) => (
-                        <ListingCard key={listing.id} listing={listing} />
-                      ))
-                    : Array.from({ length: 6 }).map((_, i) => (
-                        <div key={i} className="aspect-square overflow-hidden rounded-lg bg-muted">
-                          <Image
-                            src={`/placeholder-${(i % 3) + 1}.svg`}
-                            alt="Listing"
-                            width={200}
-                            height={200}
-                            className="size-full object-cover"
-                          />
-                        </div>
-                      ))}
-                </div>
-              </div>
+            <div className="flex flex-col gap-4 min-[400px]:flex-row">
+              <Button asChild size="lg" className="h-12 px-8 text-base">
+                <Link href="/post">
+                  Post an Ad <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                size="lg"
+                className="h-12 bg-background/50 px-8 text-base backdrop-blur-sm"
+              >
+                <Link href="/browse">Browse Listings</Link>
+              </Button>
             </div>
+            {backendUrl && (
+              <div className="mt-8 rounded-full border border-border/50 bg-muted/50 px-4 py-1.5 text-xs text-muted-foreground backdrop-blur-md">
+                Backend connected: <code className="font-semibold">{backendUrl}</code>
+              </div>
+            )}
           </div>
         </div>
       </section>
 
       {/* Featured Listings Section */}
-      {featuredListings.length > 0 && (
-        <section className="border-t border-border py-12">
-          <div className="container mx-auto max-w-7xl px-4">
-            <h2 className="mb-8 text-center text-3xl font-bold tracking-tight">
-              Featured Listings
-            </h2>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {featuredListings.map((listing) => (
-                <ListingCard key={listing.id} listing={listing} />
-              ))}
+      <section className="bg-muted/30 py-12 md:py-24 lg:py-32">
+        <div className="container px-4 md:px-6">
+          <div className="mb-12 flex flex-col items-center justify-between gap-4 md:flex-row">
+            <div className="space-y-1">
+              <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">Featured Listings</h2>
+              <p className="text-muted-foreground">Discover the best deals available right now.</p>
             </div>
-            <div className="mt-8 text-center">
-              <Button asChild variant="outline" size="lg">
-                <Link href="/browse">View All Listings</Link>
-              </Button>
-            </div>
+            <Button asChild variant="ghost" className="group">
+              <Link href="/browse">
+                View all listings
+                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Link>
+            </Button>
           </div>
-        </section>
-      )}
+
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {featuredListings.length > 0
+              ? featuredListings.map((listing) => (
+                  <ListingCard key={listing.id} listing={listing} />
+                ))
+              : Array.from({ length: 4 }).map((_, i) => (
+                  <Card
+                    key={i}
+                    className="overflow-hidden border-border/50 bg-background/50 backdrop-blur-sm"
+                  >
+                    <div className="aspect-square animate-pulse bg-muted" />
+                    <CardHeader className="space-y-2">
+                      <div className="h-4 w-2/3 animate-pulse rounded bg-muted" />
+                      <div className="h-4 w-1/3 animate-pulse rounded bg-muted" />
+                    </CardHeader>
+                  </Card>
+                ))}
+          </div>
+        </div>
+      </section>
 
       {/* Popular Categories Section */}
-      <section className="border-t border-border py-12">
-        <div className="container mx-auto max-w-7xl px-4">
-          <h2 className="mb-8 text-center text-3xl font-bold tracking-tight">Popular Categories</h2>
-          <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-6">
+      <section className="py-12 md:py-24 lg:py-32">
+        <div className="container px-4 md:px-6">
+          <div className="mb-12 space-y-4 text-center">
+            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">Popular Categories</h2>
+            <p className="mx-auto max-w-[600px] text-muted-foreground">
+              Browse through our most visited categories and find exactly what you&apos;re looking
+              for.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
             {popularCategories.map((category) => (
               <Link
                 key={category.name}
                 href={`/browse?category=${category.name.toLowerCase()}`}
-                className="flex flex-col items-center justify-center rounded-xl border border-border bg-background p-5 shadow-sm transition-colors hover:bg-muted"
+                className="group relative flex flex-col items-center justify-center gap-4 rounded-xl border bg-background p-6 transition-all hover:-translate-y-1 hover:border-primary/50 hover:shadow-lg"
               >
-                <span className="text-4xl">{category.icon}</span>
-                <h3 className="mt-3 text-base font-semibold">{category.name}</h3>
+                <div
+                  className={`rounded-full bg-muted/50 p-4 transition-colors group-hover:bg-primary/10 ${category.color}`}
+                >
+                  <category.icon className="h-8 w-8" />
+                </div>
+                <span className="text-sm font-medium text-muted-foreground transition-colors group-hover:text-foreground">
+                  {category.name}
+                </span>
               </Link>
             ))}
           </div>
         </div>
       </section>
 
+      {/* Features Section */}
+      <section className="bg-muted/30 py-12 md:py-24 lg:py-32">
+        <div className="container px-4 md:px-6">
+          <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-8">
+            <div className="space-y-4">
+              <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">
+                Why Choose Global Classifieds?
+              </h2>
+              <p className="text-lg text-muted-foreground">
+                We provide the safest and most convenient way to buy and sell locally and globally.
+              </p>
+            </div>
+            <div className="grid gap-6 sm:grid-cols-2">
+              {[
+                {
+                  title: 'Post in seconds',
+                  desc: 'Create listings with photos and reach buyers fast.',
+                  icon: Zap,
+                },
+                {
+                  title: 'Powerful search',
+                  desc: 'Filter by category, price, location, and more.',
+                  icon: Search,
+                },
+                {
+                  title: 'Built-in chat',
+                  desc: 'Secure, real-time messaging with buyers and sellers.',
+                  icon: MessageCircle,
+                },
+                {
+                  title: 'Trusted community',
+                  desc: 'Ratings, profiles, and moderation keep it safe.',
+                  icon: ShieldCheck,
+                },
+              ].map((f) => (
+                <Card
+                  key={f.title}
+                  className="border-border/50 bg-background/50 backdrop-blur-sm transition-colors hover:border-primary/20 hover:bg-background"
+                >
+                  <CardHeader>
+                    <f.icon className="mb-2 h-10 w-10 text-primary" />
+                    <CardTitle className="text-lg">{f.title}</CardTitle>
+                    <CardDescription>{f.desc}</CardDescription>
+                  </CardHeader>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Testimonials Section */}
-      <section className="border-t border-border py-12">
-        <div className="container mx-auto max-w-7xl px-4">
-          <h2 className="mb-8 text-center text-3xl font-bold tracking-tight">What Our Users Say</h2>
+      <section className="py-12 md:py-24 lg:py-32">
+        <div className="container px-4 md:px-6">
+          <h2 className="mb-12 text-center text-3xl font-bold tracking-tighter sm:text-4xl">
+            What Our Users Say
+          </h2>
           <div className="grid gap-6 md:grid-cols-3">
             {testimonials.map((testimonial, index) => (
-              <div
-                key={index}
-                className="rounded-xl border border-border bg-background p-6 shadow-sm"
-              >
-                <p className="text-lg italic text-muted-foreground">
-                  &quot;{testimonial.quote}&quot;
-                </p>
-                <p className="mt-4 font-semibold">{testimonial.author}</p>
-                <p className="text-sm text-muted-foreground">{testimonial.title}</p>
-              </div>
+              <Card key={index} className="border-none bg-muted/30 shadow-none">
+                <CardContent className="pt-6">
+                  <div className="mb-4 text-primary">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      stroke="none"
+                      className="h-8 w-8 opacity-20"
+                    >
+                      <path d="M14.017 21L14.017 18C14.017 16.0547 15.373 15.122 16.4141 15.122C17.4551 15.122 18.1719 16.0547 18.1719 18C18.1719 19.9453 16.8154 21 15.7744 21H14.017ZM8.01758 21L8.01758 18C8.01758 16.0547 9.37305 15.122 10.4141 15.122C11.4551 15.122 12.1719 16.0547 12.1719 18C12.1719 19.9453 10.8154 21 9.77441 21H8.01758ZM16.4141 13.122C16.4141 13.122 18.1719 13.122 18.1719 11C18.1719 8.87805 16.4141 7.12207 14.017 7.12207C11.6199 7.12207 9.8623 8.87805 9.8623 11C9.8623 13.122 11.6199 13.122 11.6199 13.122C11.6199 13.122 10.4141 13.122 10.4141 15.122C10.4141 17.122 11.6199 17.122 11.6199 17.122C11.6199 17.122 9.8623 17.122 9.8623 15.122C9.8623 13.122 11.6199 13.122 11.6199 13.122ZM10.4141 11C10.4141 9.87805 11.6199 9.12207 12.8174 9.12207C14.0149 9.12207 15.2207 9.87805 15.2207 11C15.2207 12.122 14.0149 12.878 12.8174 12.878C11.6199 12.878 10.4141 12.122 10.4141 11Z" />
+                    </svg>
+                  </div>
+                  <p className="mb-6 text-lg italic text-muted-foreground">
+                    &quot;{testimonial.quote}&quot;
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 font-bold text-primary">
+                      {testimonial.author[0]}
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold">{testimonial.author}</p>
+                      <p className="text-xs text-muted-foreground">{testimonial.title}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Features */}
-      <section className="border-t border-border">
-        <div className="container mx-auto max-w-7xl px-4 py-12">
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              {
-                title: 'Post in seconds',
-                desc: 'Create listings with photos and reach buyers fast.',
-              },
-              { title: 'Powerful search', desc: 'Filter by category, price, location, and more.' },
-              {
-                title: 'Built-in chat',
-                desc: 'Secure, real-time messaging with buyers and sellers.',
-              },
-              {
-                title: 'Trusted community',
-                desc: 'Ratings, profiles, and moderation keep it safe.',
-              },
-            ].map((f) => (
-              <div
-                key={f.title}
-                className="rounded-xl border border-border bg-background p-5 shadow-sm"
-              >
-                <h3 className="text-base font-semibold">{f.title}</h3>
-                <p className="mt-2 text-sm text-muted-foreground">{f.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="border-t border-border bg-[rgb(var(--muted)/0.4)]">
-        <div className="container mx-auto max-w-7xl px-4 py-12">
-          <div className="flex flex-col items-center gap-4 text-center">
-            <h2 className="text-pretty text-2xl font-bold sm:text-3xl">Ready to sell something?</h2>
-            <p className="max-w-2xl text-balance text-muted-foreground">
-              Join thousands of users buying and selling safely every day. It takes less than a
-              minute to post your first listing.
-            </p>
-            <div className="flex gap-3">
-              <Button asChild size="lg">
+      {/* CTA Section */}
+      <section className="border-t py-12 md:py-24 lg:py-32">
+        <div className="container px-4 md:px-6">
+          <div className="flex flex-col items-center justify-center space-y-4 text-center">
+            <div className="space-y-2">
+              <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
+                Ready to sell something?
+              </h2>
+              <p className="mx-auto max-w-[600px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                Join thousands of users buying and selling safely every day. It takes less than a
+                minute to post your first listing.
+              </p>
+            </div>
+            <div className="flex flex-col gap-2 min-[400px]:flex-row">
+              <Button asChild size="lg" className="px-8">
                 <Link href="/post">Post your first ad</Link>
               </Button>
-              <Button asChild variant="outline" size="lg">
+              <Button asChild variant="outline" size="lg" className="px-8">
                 <Link href="/browse">Explore listings</Link>
               </Button>
             </div>
